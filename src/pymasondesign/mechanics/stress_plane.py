@@ -4,6 +4,7 @@ import math
 from typing import Iterable
 from attrs import define, field
 from pymasondesign.geometry.point import Point2D
+from pymasondesign.geometry.transform import Transform2D
 
 
 @define(frozen=True, slots=True)
@@ -55,6 +56,24 @@ class NormalStressPlane:
             cx=self.cx * factor,
             cy=self.cy * factor,
         )
+
+    def transform(self, transform: Transform2D) -> NormalStressPlane:
+        """Expressa o plano de tensões em um novo sistema de coordenadas 2D (incluindo rotação e espelhamento).
+
+        Args:
+            transform: Transformação 2D contendo origem e vetores de base (u_axis, v_axis).
+
+        Returns:
+            Novo NormalStressPlane ajustado para as coordenadas do novo sistema.
+        """
+        # Tensão na nova origem (onde x_local=0, y_local=0)
+        c0_new = self.stress_at(transform.origin.x, transform.origin.y)
+
+        # Projeção do gradiente de tensão nos novos eixos u e v
+        cx_new = self.cx * transform.u_axis.x + self.cy * transform.u_axis.y
+        cy_new = self.cx * transform.v_axis.x + self.cy * transform.v_axis.y
+
+        return NormalStressPlane(c0=c0_new, cx=cx_new, cy=cy_new)
 
     def __add__(self, other: NormalStressPlane) -> NormalStressPlane:
         """Aplica o princípio da superposição somando dois planos de tensões."""
