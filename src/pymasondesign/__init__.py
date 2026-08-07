@@ -8,6 +8,7 @@ from pymasondesign.geometry import (
     RectangularSection,
     CompositeSection,
 )
+from pymasondesign.mechanics import ElasticStressState
 
 __version__ = "0.1.0"
 
@@ -18,5 +19,6 @@ __all__ = [
     "Section",
     "RectangularSection",
     "CompositeSection",
+    "ElasticStressState",
     "__version__",
 ]
