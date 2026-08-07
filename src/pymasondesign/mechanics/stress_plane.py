@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from typing import Iterable
 from attrs import define, field
 from pymasondesign.geometry.point import Point2D
 
@@ -46,3 +47,39 @@ class NormalStressPlane:
         if self.cx == 0.0 and self.cy == 0.0:
             return 0.0
         return math.atan2(-self.cx, self.cy)
+
+    def scale(self, factor: float) -> NormalStressPlane:
+        """Multiplica todos os coeficientes do plano de tensões por um escalar."""
+        return NormalStressPlane(
+            c0=self.c0 * factor,
+            cx=self.cx * factor,
+            cy=self.cy * factor,
+        )
+
+    def __add__(self, other: NormalStressPlane) -> NormalStressPlane:
+        """Aplica o princípio da superposição somando dois planos de tensões."""
+        if not isinstance(other, NormalStressPlane):
+            return NotImplemented
+        return NormalStressPlane(
+            c0=self.c0 + other.c0,
+            cx=self.cx + other.cx,
+            cy=self.cy + other.cy,
+        )
+
+    def __mul__(self, factor: float) -> NormalStressPlane:
+        return self.scale(factor)
+
+    def __rmul__(self, factor: float) -> NormalStressPlane:
+        return self.scale(factor)
+
+    @classmethod
+    def combine(cls, items: Iterable[NormalStressPlane]) -> NormalStressPlane:
+        """Combina e totaliza múltiplos planos de tensões aplicando o princípio da superposição."""
+        total_c0 = 0.0
+        total_cx = 0.0
+        total_cy = 0.0
+        for p in items:
+            total_c0 += p.c0
+            total_cx += p.cx
+            total_cy += p.cy
+        return cls(c0=total_c0, cx=total_cx, cy=total_cy)

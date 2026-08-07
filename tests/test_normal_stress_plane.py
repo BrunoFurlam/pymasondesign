@@ -55,6 +55,37 @@ class TestNormalStressPlane(unittest.TestCase):
         # Ângulo da LN: atan2(-1.0, 2.0)
         self.assertAlmostEqual(plane.neutral_axis_angle, math.atan2(-1.0, 2.0))
 
+    def test_scale_addition_and_compose(self):
+        p1 = NormalStressPlane(c0=2.0, cx=0.5, cy=1.0)
+        p2 = NormalStressPlane(c0=3.0, cx=1.0, cy=-0.5)
+
+        # Adição direta (superposição)
+        p_sum = p1 + p2
+        self.assertAlmostEqual(p_sum.c0, 5.0)
+        self.assertAlmostEqual(p_sum.cx, 1.5)
+        self.assertAlmostEqual(p_sum.cy, 0.5)
+
+        # Escala
+        p_scaled = p1 * 2.0
+        self.assertAlmostEqual(p_scaled.c0, 4.0)
+        self.assertAlmostEqual(p_scaled.cx, 1.0)
+        self.assertAlmostEqual(p_scaled.cy, 2.0)
+
+        # Composição a partir de iterável
+        planes = [
+            NormalStressPlane(c0=1.0, cx=0.1, cy=0.2),
+            NormalStressPlane(c0=2.0, cx=0.3, cy=0.4),
+            NormalStressPlane(c0=3.0, cx=0.5, cy=0.6),
+        ]
+        p_comp = NormalStressPlane.combine(planes)
+        self.assertAlmostEqual(p_comp.c0, 6.0)
+        self.assertAlmostEqual(p_comp.cx, 0.9)
+        self.assertAlmostEqual(p_comp.cy, 1.2)
+
+        # Iterável vazio
+        empty_comp = NormalStressPlane.combine([])
+        self.assertEqual(empty_comp, NormalStressPlane())
+
 
 if __name__ == "__main__":
     unittest.main()

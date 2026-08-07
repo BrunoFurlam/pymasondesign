@@ -8,7 +8,7 @@ from pymasondesign.geometry import (
     RectangularSection,
     CompositeSection,
 )
-from pymasondesign.mechanics import NormalStressPlane
+from pymasondesign.mechanics import NormalStressPlane, SectionForces
 
 __version__ = "0.1.0"
 
@@ -20,5 +20,6 @@ __all__ = [
     "RectangularSection",
     "CompositeSection",
     "NormalStressPlane",
+    "SectionForces",
     "__version__",
 ]
