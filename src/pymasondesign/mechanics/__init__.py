@@ -1,5 +1,5 @@
 """Módulo de mecânica e resistência dos materiais."""
 
-from pymasondesign.mechanics.elastic_stress import ElasticStressState
+from pymasondesign.mechanics.stress_plane import NormalStressPlane
 
-__all__ = ["ElasticStressState"]
+__all__ = ["NormalStressPlane"]

@@ -6,13 +6,13 @@ from pymasondesign.geometry.point import Point2D
 
 
 @define(frozen=True, slots=True)
-class ElasticStressState:
-    """Representa a distribuição linear de tensões normais elásticas em uma seção transversal.
+class NormalStressPlane:
+    """Representa o plano linear de tensões normais em uma seção transversal.
 
     O campo de tensões é definido pela equação de plano:
         σ(x, y) = c0 + cx * x + cy * y
 
-    onde (x, y) são coordenadas medidas a partir do centro de gravidade (0.0, 0.0).
+    onde (x, y) são coordenadas relativas ao centro de gravidade (0.0, 0.0).
 
     Attributes:
         c0: Parcela uniforme de tensão devida ao esforço normal (N / A).
@@ -25,11 +25,11 @@ class ElasticStressState:
     cy: float = field(default=0.0, converter=float)
 
     def stress_at(self, x: float, y: float) -> float:
-        """Calcula a tensão normal σ no ponto (x, y) medido em relação ao centro de gravidade (0.0, 0.0)."""
+        """Calcula a tensão normal σ no ponto (x, y) relativo ao centro de gravidade (0.0, 0.0)."""
         return self.c0 + self.cx * x + self.cy * y
 
     def stress_at_point(self, point: Point2D) -> float:
-        """Calcula a tensão normal σ no Point2D cujas coordenadas são relativas ao CG."""
+        """Calcula a tensão normal σ no Point2D relativo ao centro de gravidade."""
         return self.stress_at(point.x, point.y)
 
     @property
