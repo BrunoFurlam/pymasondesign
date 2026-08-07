@@ -22,6 +22,15 @@ from pymasondesign.mechanics import (
     MechanicsService,
     DEFAULT_TOLERANCE,
 )
+from pymasondesign.materials import (
+    SteelCategory,
+    BlockMaterialType,
+    SteelSpecification,
+    BlockSpecification,
+    MortarSpecification,
+    GroutSpecification,
+    MasonrySpecification,
+)
 
 __version__ = "0.1.0"
 
@@ -45,5 +54,13 @@ __all__ = [
     "StressRegime",
     "MechanicsService",
     "DEFAULT_TOLERANCE",
+    # Materiais estruturais
+    "SteelCategory",
+    "BlockMaterialType",
+    "SteelSpecification",
+    "BlockSpecification",
+    "MortarSpecification",
+    "GroutSpecification",
+    "MasonrySpecification",
     "__version__",
 ]
