@@ -24,48 +24,6 @@ class ElasticStressState:
     cx: float = field(default=0.0, converter=float)
     cy: float = field(default=0.0, converter=float)
 
-    @classmethod
-    def from_forces(
-        cls,
-        normal_force: float = 0.0,
-        moment_x: float = 0.0,
-        moment_y: float = 0.0,
-        area: float = 0.0,
-        ixx: float = 0.0,
-        iyy: float = 0.0,
-        ixy: float = 0.0,
-    ) -> ElasticStressState:
-        """Constrói o estado de tensões elásticas a partir dos esforços e valores geométricos.
-
-        Args:
-            normal_force: Esforço normal solicitante (N), positivo para tração e negativo para compressão.
-            moment_x: Momento fletor em torno do eixo baricêntrico X (Mx).
-            moment_y: Momento fletor em torno do eixo baricêntrico Y (My).
-            area: Área da seção transversal (A).
-            ixx: Momento de inércia em relação ao eixo baricêntrico X (Ixx).
-            iyy: Momento de inércia em relação ao eixo baricêntrico Y (Iyy).
-            ixy: Produto de inércia baricêntrico (Ixy), padrão 0.0.
-
-        Returns:
-            Instância de ElasticStressState.
-        """
-        if area <= 0:
-            raise ValueError(f"Área deve ser estritamente positiva, recebido: {area}.")
-
-        c0 = normal_force / area
-
-        det = ixx * iyy - ixy**2
-        if det == 0:
-            if moment_x != 0.0 or moment_y != 0.0:
-                raise ZeroDivisionError("Determinante dos momentos de inércia é nulo para momentos não-nulos.")
-            cx = 0.0
-            cy = 0.0
-        else:
-            cx = (moment_y * ixx - moment_x * ixy) / det
-            cy = (moment_x * iyy - moment_y * ixy) / det
-
-        return cls(c0=c0, cx=cx, cy=cy)
-
     def stress_at(self, x: float, y: float) -> float:
         """Calcula a tensão normal σ no ponto (x, y) medido em relação ao centro de gravidade (0.0, 0.0)."""
         return self.c0 + self.cx * x + self.cy * y

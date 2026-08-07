@@ -2,17 +2,13 @@ from __future__ import annotations
 
 import math
 import unittest
-from pymasondesign.geometry import (
-    Point2D,
-    RectangularSection,
-)
+from pymasondesign.geometry import Point2D
 from pymasondesign.mechanics import ElasticStressState
 
 
 class TestElasticStressState(unittest.TestCase):
-    def test_direct_coefficients_initialization(self):
-        # Inicialização direta com parâmetros do plano c0, cx, cy
-        # sigma(x, y) = 10.0 + 2.0*x + 3.0*y
+    def test_direct_coefficients(self):
+        # Plano de tensões: σ(x, y) = 10.0 + 2.0*x + 3.0*y
         stress_state = ElasticStressState(c0=10.0, cx=2.0, cy=3.0)
 
         self.assertAlmostEqual(stress_state.c0, 10.0)
@@ -21,74 +17,43 @@ class TestElasticStressState(unittest.TestCase):
 
         # No CG (0, 0)
         self.assertAlmostEqual(stress_state.stress_at(0.0, 0.0), 10.0)
-        # No ponto (x=1.0, y=2.0)
-        self.assertAlmostEqual(stress_state.stress_at(1.0, 2.0), 10.0 + 2.0*1.0 + 3.0*2.0)
+
+        # Em um ponto qualquer (x=1.0, y=2.0)
+        self.assertAlmostEqual(stress_state.stress_at(1.0, 2.0), 10.0 + 2.0 * 1.0 + 3.0 * 2.0)
+
         # Usando Point2D
         p = Point2D(1.0, 2.0)
         self.assertAlmostEqual(stress_state.stress_at_point(p), 18.0)
 
-    def test_from_forces_pure_normal(self):
-        # Compressão pura: N = -546 kN, A = 546 cm² -> c0 = -1.0
-        stress_state = ElasticStressState.from_forces(
-            normal_force=-546.0,
-            area=546.0,
-            ixx=69205.5,
-            iyy=8918.0,
-        )
+    def test_pure_axial_compression(self):
+        # Tensão uniforme de compressão: c0 = -1.0, cx = 0, cy = 0
+        stress_state = ElasticStressState(c0=-1.0, cx=0.0, cy=0.0)
 
-        self.assertAlmostEqual(stress_state.c0, -1.0)
-        self.assertAlmostEqual(stress_state.cx, 0.0)
-        self.assertAlmostEqual(stress_state.cy, 0.0)
         self.assertAlmostEqual(stress_state.stress_at(0.0, 0.0), -1.0)
         self.assertAlmostEqual(stress_state.stress_at(7.0, 19.5), -1.0)
+        self.assertAlmostEqual(stress_state.stress_at(-7.0, -19.5), -1.0)
+        self.assertEqual(stress_state.neutral_axis_distance, float("inf"))
 
-    def test_from_forces_pure_bending(self):
-        # Mx = 69205.5 kN.cm, Ixx = 69205.5 cm4 -> cy = 1.0
-        stress_state = ElasticStressState.from_forces(
-            moment_x=69205.5,
-            area=546.0,
-            ixx=69205.5,
-            iyy=8918.0,
-        )
+    def test_pure_bending(self):
+        # Gradiente puro em Y: c0 = 0, cx = 0, cy = 1.0
+        stress_state = ElasticStressState(c0=0.0, cx=0.0, cy=1.0)
 
-        self.assertAlmostEqual(stress_state.c0, 0.0)
-        self.assertAlmostEqual(stress_state.cy, 1.0)
-        self.assertAlmostEqual(stress_state.cx, 0.0)
-
-        # No topo (y = +19.5) e na base (y = -19.5)
         self.assertAlmostEqual(stress_state.stress_at(0.0, 19.5), 19.5)
         self.assertAlmostEqual(stress_state.stress_at(0.0, -19.5), -19.5)
+        self.assertAlmostEqual(stress_state.stress_at(0.0, 0.0), 0.0)
         self.assertAlmostEqual(stress_state.neutral_axis_distance, 0.0)
+        self.assertAlmostEqual(stress_state.neutral_axis_angle, 0.0)
 
-    def test_from_forces_combined_biaxial(self):
-        stress_state = ElasticStressState.from_forces(
-            normal_force=-546.0,
-            moment_x=34602.75,
-            moment_y=4459.0,
-            area=546.0,
-            ixx=69205.5,
-            iyy=8918.0,
-        )
+    def test_biaxial_bending_neutral_axis(self):
+        # c0 = -2.0, cx = 1.0, cy = 2.0
+        stress_state = ElasticStressState(c0=-2.0, cx=1.0, cy=2.0)
 
-        # c0 = -1.0, cx = 0.5, cy = 0.5
-        # sigma(7, 19.5) = -1.0 + 3.5 + 9.75 = 12.25
-        self.assertAlmostEqual(stress_state.stress_at(7.0, 19.5), 12.25)
-        self.assertAlmostEqual(stress_state.stress_at(-7.0, -19.5), -14.25)
+        # Distância da LN: |-2.0| / sqrt(1^2 + 2^2) = 2 / sqrt(5)
+        expected_dist = 2.0 / math.sqrt(5.0)
+        self.assertAlmostEqual(stress_state.neutral_axis_distance, expected_dist)
 
-    def test_from_forces_unsymmetric_ixy(self):
-        stress_state = ElasticStressState.from_forces(
-            normal_force=100.0,
-            moment_x=4600.0,
-            moment_y=0.0,
-            area=100.0,
-            ixx=1000.0,
-            iyy=500.0,
-            ixy=200.0,
-        )
-        self.assertAlmostEqual(stress_state.c0, 1.0)
-        self.assertAlmostEqual(stress_state.cx, -2.0)
-        self.assertAlmostEqual(stress_state.cy, 5.0)
-        self.assertAlmostEqual(stress_state.stress_at(1.0, 2.0), 9.0)
+        # Ângulo da LN: atan2(-1.0, 2.0)
+        self.assertAlmostEqual(stress_state.neutral_axis_angle, math.atan2(-1.0, 2.0))
 
 
 if __name__ == "__main__":
