@@ -12,7 +12,9 @@ license = "MIT"
 authors = [
     { name = "Masonry Design Team" }
 ]
-dependencies = []
+dependencies = [
+    "attrs>=23.1.0",
+]
 
 [project.optional-dependencies]
 dev = [
