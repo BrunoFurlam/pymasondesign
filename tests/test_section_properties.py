@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import math
 import unittest
-from pymasondesign.geometry import (
-    Point2D,
-    BoundingBox,
+from pymasondesign.geometry import Point2D, BoundingBox
+from pymasondesign.sections import (
+    SectionProperties,
     RectangularSection,
     CompositeSection,
 )

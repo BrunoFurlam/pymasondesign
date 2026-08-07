@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import unittest
-from pymasondesign.geometry import RectangularSection
+from pymasondesign.sections import RectangularSection, PolygonSection
 from pymasondesign.mechanics import (
     SectionForces,
     StressRegime,
@@ -106,6 +106,30 @@ class TestMechanicsService(unittest.TestCase):
             MechanicsService.classify_stress_regime(SectionForces(normal=100.0, moment_x=50.0, moment_y=50.0)),
             StressRegime.FLEXO_TENSION_XY,
         )
+
+    def test_integrate_normal_stress_on_polygon(self):
+        from pymasondesign.geometry import Point2D
+        from pymasondesign.sections import PolygonSection
+        from pymasondesign.mechanics import NormalStressPlane
+
+        # Triângulo (0,0), (6,0), (0,4) -> Área = 12, Cg = (2.0, 1.3333333333333333)
+        triangle = PolygonSection.from_vertices([
+            Point2D(0.0, 0.0),
+            Point2D(6.0, 0.0),
+            Point2D(0.0, 4.0),
+        ])
+
+        # Plano de tensões: σ(x, y) = 10.0 + 2.0*x + 3.0*y
+        plane = NormalStressPlane(c0=10.0, cx=2.0, cy=3.0)
+
+        # Tensão no CG do triângulo: σ(2, 4/3) = 10.0 + 2.0*2.0 + 3.0*(4/3) = 10 + 4 + 4 = 18.0
+        # Força acumulada N = Área * σ(Cg) = 12 * 18.0 = 216.0
+        force = MechanicsService.integrate_normal_stress(plane, triangle)
+        self.assertAlmostEqual(force, 216.0)
+
+        # Teste com alias calculate_accumulated_force
+        force_alias = MechanicsService.calculate_accumulated_force(plane, triangle)
+        self.assertAlmostEqual(force_alias, 216.0)
 
 
 if __name__ == "__main__":

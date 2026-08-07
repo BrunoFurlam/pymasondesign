@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from attrs import define, field, Factory
-from pymasondesign.geometry.base import Section
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.bounds import BoundingBox
-from pymasondesign.geometry.properties import SectionProperties
+from pymasondesign.sections.base import Section
+from pymasondesign.sections.properties import SectionProperties
 
 
 @define(frozen=True, slots=True)

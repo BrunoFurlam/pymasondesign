@@ -1,6 +1,5 @@
-from __future__ import annotations
-
-from pymasondesign.geometry.properties import SectionProperties
+from pymasondesign.sections.base import Section
+from pymasondesign.sections.properties import SectionProperties
 from pymasondesign.mechanics.forces import SectionForces
 from pymasondesign.mechanics.stress_plane import NormalStressPlane
 from pymasondesign.mechanics.enums import StressRegime
@@ -11,6 +10,37 @@ DEFAULT_TOLERANCE: float = 1e-6
 
 class MechanicsService:
     """Serviço estático e funcional para execução dos principais cálculos da mecânica das estruturas."""
+
+    @staticmethod
+    def integrate_normal_stress(
+        plane: NormalStressPlane,
+        section: Section,
+    ) -> float:
+        """Calcula a força normal acumulada (integral de σ(x, y) dA) sobre uma seção ou polígono.
+
+        Como o plano de tensões é afim/linear σ(x, y) = c0 + cx * x + cy * y,
+        o Teorema da Média fornece analiticamente o valor exato:
+            N = A * σ(x_cg, y_cg)
+        onde (x_cg, y_cg) é o centro de gravidade da região integrada no mesmo sistema do plano.
+
+        Args:
+            plane: Plano linear de tensões normais.
+            section: Seção (polígono, retângulo, seção composta) sobre a qual integrar a tensão.
+
+        Returns:
+            Força normal total acumulada na área da seção.
+        """
+        props = section.compute_properties()
+        sigma_at_cg = plane.stress_at(props.cg.x, props.cg.y)
+        return props.area * sigma_at_cg
+
+    @staticmethod
+    def calculate_accumulated_force(
+        plane: NormalStressPlane,
+        section: Section,
+    ) -> float:
+        """Alias para integrate_normal_stress."""
+        return MechanicsService.integrate_normal_stress(plane, section)
 
     @staticmethod
     def calculate_normal_stress_plane(
