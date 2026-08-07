@@ -120,28 +120,3 @@ class SectionProperties:
         i2 = avg - r
         theta_p = 0.5 * math.atan2(-2 * self.ixy, self.ixx - self.iyy)
         return i1, i2, theta_p
-
-    def create_elastic_stress(
-        self,
-        normal_force: float = 0.0,
-        moment_x: float = 0.0,
-        moment_y: float = 0.0,
-    ) -> ElasticStressState:
-        """Cria o objeto de estado de tensões elásticas para esta seção transversal.
-
-        Args:
-            normal_force: Esforço normal solicitante (N), positivo para tração e negativo para compressão.
-            moment_x: Momento fletor solicitante em torno do eixo X centroidal (Mx).
-            moment_y: Momento fletor solicitante em torno do eixo Y centroidal (My).
-
-        Returns:
-            Instância de ElasticStressState configurada.
-        """
-        from pymasondesign.mechanics.elastic_stress import ElasticStressState
-
-        return ElasticStressState(
-            properties=self,
-            normal_force=normal_force,
-            moment_x=moment_x,
-            moment_y=moment_y,
-        )

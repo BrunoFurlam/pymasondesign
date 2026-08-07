@@ -3,72 +3,75 @@ from __future__ import annotations
 import math
 from attrs import define, field
 from pymasondesign.geometry.point import Point2D
-from pymasondesign.geometry.properties import SectionProperties
 
 
 @define(frozen=True, slots=True)
 class ElasticStressState:
-    """Representa a distribuição de tensões normais elásticas em uma seção transversal.
+    """Representa a distribuição linear de tensões normais elásticas em uma seção transversal.
 
-    Calcula o campo linear de tensões normais a partir do esforço normal (N)
-    e momentos fletores (Mx, My) em coordenadas (x, y) relativas ao
-    centro de gravidade da seção (onde 0, 0 é o CG).
+    O campo de tensões é definido pela equação de plano:
+        σ(x, y) = c0 + cx * x + cy * y
+
+    onde (x, y) são coordenadas medidas a partir do centro de gravidade (0.0, 0.0).
 
     Attributes:
-        properties: Propriedades geométricas da seção (SectionProperties).
-        normal_force: Esforço normal solicitante (N), positivo para tração e negativo para compressão.
-        moment_x: Momento fletor em torno do eixo baricêntrico X (Mx).
-        moment_y: Momento fletor em torno do eixo baricêntrico Y (My).
+        c0: Parcela uniforme de tensão devida ao esforço normal (N / A).
+        cx: Gradiente de variação da tensão em relação ao eixo X centroidal.
+        cy: Gradiente de variação da tensão em relação ao eixo Y centroidal.
     """
 
-    properties: SectionProperties
-    normal_force: float = field(default=0.0, converter=float)
-    moment_x: float = field(default=0.0, converter=float)
-    moment_y: float = field(default=0.0, converter=float)
+    c0: float = field(default=0.0, converter=float)
+    cx: float = field(default=0.0, converter=float)
+    cy: float = field(default=0.0, converter=float)
 
-    @property
-    def c0(self) -> float:
-        """Tensão média uniforme devida ao esforço normal (N / A)."""
-        if self.properties.area <= 0:
-            raise ValueError("Área da seção deve ser positiva para cálculo de tensões.")
-        return self.normal_force / self.properties.area
-
-    @property
-    def cx(self) -> float:
-        """Gradiente de variação da tensão em relação ao eixo X centroidal."""
-        ixx = self.properties.ixx
-        iyy = self.properties.iyy
-        ixy = self.properties.ixy
-        det = ixx * iyy - ixy**2
-        if det == 0:
-            raise ZeroDivisionError("Determinante dos momentos de inércia é nulo.")
-        return (self.moment_y * ixx - self.moment_x * ixy) / det
-
-    @property
-    def cy(self) -> float:
-        """Gradiente de variação da tensão em relação ao eixo Y centroidal."""
-        ixx = self.properties.ixx
-        iyy = self.properties.iyy
-        ixy = self.properties.ixy
-        det = ixx * iyy - ixy**2
-        if det == 0:
-            raise ZeroDivisionError("Determinante dos momentos de inércia é nulo.")
-        return (self.moment_x * iyy - self.moment_y * ixy) / det
-
-    def stress_at(self, x: float, y: float) -> float:
-        """Calcula a tensão normal σ no ponto (x, y) relativo ao centro de gravidade (0.0, 0.0).
+    @classmethod
+    def from_forces(
+        cls,
+        normal_force: float = 0.0,
+        moment_x: float = 0.0,
+        moment_y: float = 0.0,
+        area: float = 0.0,
+        ixx: float = 0.0,
+        iyy: float = 0.0,
+        ixy: float = 0.0,
+    ) -> ElasticStressState:
+        """Constrói o estado de tensões elásticas a partir dos esforços e valores geométricos.
 
         Args:
-            x: Coordenada horizontal relativa ao CG (x - x_cg).
-            y: Coordenada vertical relativa ao CG (y - y_cg).
+            normal_force: Esforço normal solicitante (N), positivo para tração e negativo para compressão.
+            moment_x: Momento fletor em torno do eixo baricêntrico X (Mx).
+            moment_y: Momento fletor em torno do eixo baricêntrico Y (My).
+            area: Área da seção transversal (A).
+            ixx: Momento de inércia em relação ao eixo baricêntrico X (Ixx).
+            iyy: Momento de inércia em relação ao eixo baricêntrico Y (Iyy).
+            ixy: Produto de inércia baricêntrico (Ixy), padrão 0.0.
 
         Returns:
-            Tensão normal σ resultante.
+            Instância de ElasticStressState.
         """
+        if area <= 0:
+            raise ValueError(f"Área deve ser estritamente positiva, recebido: {area}.")
+
+        c0 = normal_force / area
+
+        det = ixx * iyy - ixy**2
+        if det == 0:
+            if moment_x != 0.0 or moment_y != 0.0:
+                raise ZeroDivisionError("Determinante dos momentos de inércia é nulo para momentos não-nulos.")
+            cx = 0.0
+            cy = 0.0
+        else:
+            cx = (moment_y * ixx - moment_x * ixy) / det
+            cy = (moment_x * iyy - moment_y * ixy) / det
+
+        return cls(c0=c0, cx=cx, cy=cy)
+
+    def stress_at(self, x: float, y: float) -> float:
+        """Calcula a tensão normal σ no ponto (x, y) medido em relação ao centro de gravidade (0.0, 0.0)."""
         return self.c0 + self.cx * x + self.cy * y
 
     def stress_at_point(self, point: Point2D) -> float:
-        """Calcula a tensão normal σ em um Point2D cujas coordenadas são relativas ao CG."""
+        """Calcula a tensão normal σ no Point2D cujas coordenadas são relativas ao CG."""
         return self.stress_at(point.x, point.y)
 
     @property
