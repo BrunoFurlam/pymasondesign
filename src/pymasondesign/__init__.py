@@ -25,11 +25,17 @@ from pymasondesign.mechanics import (
 from pymasondesign.materials import (
     SteelCategory,
     BlockMaterialType,
+    StrengthClass,
+    BlockStrengthClass,
+    CeramicWallType,
+    BlockWallType,
     SteelSpecification,
     BlockSpecification,
     MortarSpecification,
     GroutSpecification,
     MasonrySpecification,
+    NBR16868TableEntry,
+    NBR16868MasonryFactory,
 )
 
 __version__ = "0.1.0"
@@ -57,10 +63,16 @@ __all__ = [
     # Materiais estruturais
     "SteelCategory",
     "BlockMaterialType",
+    "StrengthClass",
+    "BlockStrengthClass",
+    "CeramicWallType",
+    "BlockWallType",
     "SteelSpecification",
     "BlockSpecification",
     "MortarSpecification",
     "GroutSpecification",
     "MasonrySpecification",
+    "NBR16868TableEntry",
+    "NBR16868MasonryFactory",
     "__version__",
 ]

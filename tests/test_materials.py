@@ -4,11 +4,15 @@ import unittest
 from pymasondesign.materials import (
     SteelCategory,
     BlockMaterialType,
+    StrengthClass,
+    CeramicWallType,
     SteelSpecification,
     BlockSpecification,
     MortarSpecification,
     GroutSpecification,
     MasonrySpecification,
+    NBR16868TableEntry,
+    NBR16868MasonryFactory,
 )
 
 
@@ -143,6 +147,86 @@ class TestMaterials(unittest.TestCase):
         self.assertAlmostEqual(m_unfilled.fk_hollow, 0.70 * 0.80 * 10.0)  # 5.6 MPa
         self.assertAlmostEqual(m_unfilled.fk_grouted, 0.70 * 0.80 * 18.0)  # 10.08 MPa
         self.assertAlmostEqual(m_unfilled.calculate_fk(grout_ratio=0.5), 0.5 * 5.6 + 0.5 * 10.08)  # 7.84 MPa
+
+    def test_nbr16868_factory_all_table_entries(self):
+        # 1. Verifica os 12 valores disponíveis
+        available = NBR16868MasonryFactory.get_available_fbk()
+        expected_fbk = (3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0)
+        self.assertEqual(available, expected_fbk)
+
+        # 2. Teste específico para fbk = 14 MPa (Classe A, fa=12, fg=30, fpk=9.8, fpgk=15.7)
+        entry14 = NBR16868MasonryFactory.get_entry(14.0)
+        self.assertEqual(entry14.strength_class, StrengthClass.A)
+        self.assertAlmostEqual(entry14.fa, 12.0)
+        self.assertAlmostEqual(entry14.fgk, 30.0)
+        self.assertAlmostEqual(entry14.fpk, 9.8)
+        self.assertAlmostEqual(entry14.fpgk, 15.7)
+
+        # 3. Teste do método de fábrica na MasonrySpecification
+        m14 = MasonrySpecification.from_nbr16868(fbk=14.0)
+        self.assertAlmostEqual(m14.block.fbk, 14.0)
+        self.assertEqual(m14.block.strength_class, StrengthClass.A)
+        self.assertAlmostEqual(m14.mortar.fa, 12.0)
+        self.assertAlmostEqual(m14.grout.fg, 30.0)
+        self.assertAlmostEqual(m14.fpk, 9.8)
+        self.assertAlmostEqual(m14.fpgk, 15.7)
+        self.assertAlmostEqual(m14.fk_hollow, 0.70 * 9.8)
+        self.assertAlmostEqual(m14.fk_grouted, 0.70 * 15.7)
+
+        # 4. Classes C (fbk=3) e B (fbk=4)
+        entry3 = NBR16868MasonryFactory.get_entry(3.0)
+        self.assertEqual(entry3.strength_class, StrengthClass.C)
+        entry4 = NBR16868MasonryFactory.get_entry(4.0)
+        self.assertEqual(entry4.strength_class, StrengthClass.B)
+
+        # 5. fbk inválido dispara KeyError
+        with self.assertRaises(KeyError):
+            NBR16868MasonryFactory.get_entry(99.0)
+
+    def test_nbr16868_ceramic_tables(self):
+        # 1. Cerâmico - Paredes Vazadas (fbk = 4, 6, 8, 10, 12)
+        hollow_fbk = NBR16868MasonryFactory.get_available_fbk(
+            material=BlockMaterialType.CERAMIC, wall_type=CeramicWallType.HOLLOW
+        )
+        self.assertEqual(hollow_fbk, (4.0, 6.0, 8.0, 10.0, 12.0))
+
+        entry_hollow_10 = NBR16868MasonryFactory.get_entry(
+            fbk=10.0, material=BlockMaterialType.CERAMIC, wall_type=CeramicWallType.HOLLOW
+        )
+        self.assertEqual(entry_hollow_10.wall_type, CeramicWallType.HOLLOW)
+        self.assertAlmostEqual(entry_hollow_10.fa, 8.0)
+        self.assertAlmostEqual(entry_hollow_10.fgk, 25.0)
+        self.assertAlmostEqual(entry_hollow_10.fpk, 4.5)
+        self.assertAlmostEqual(entry_hollow_10.fpgk, 7.2)
+
+        # 2. Cerâmico - Paredes Maciças (fbk = 10, 14, 18)
+        solid_fbk = NBR16868MasonryFactory.get_available_fbk(
+            material=BlockMaterialType.CERAMIC, wall_type=CeramicWallType.SOLID
+        )
+        self.assertEqual(solid_fbk, (10.0, 14.0, 18.0))
+
+        entry_solid_18 = NBR16868MasonryFactory.get_entry(
+            fbk=18.0, material=BlockMaterialType.CERAMIC, wall_type=CeramicWallType.SOLID
+        )
+        self.assertEqual(entry_solid_18.wall_type, CeramicWallType.SOLID)
+        self.assertAlmostEqual(entry_solid_18.fa, 15.0)
+        self.assertAlmostEqual(entry_solid_18.fgk, 30.0)
+        self.assertAlmostEqual(entry_solid_18.fpk, 10.8)
+        self.assertAlmostEqual(entry_solid_18.fpgk, 17.3)
+
+        # 3. Factory method from_nbr16868 para cerâmicos
+        m_cer_solid = MasonrySpecification.from_nbr16868(
+            fbk=14.0,
+            material=BlockMaterialType.CERAMIC,
+            wall_type=CeramicWallType.SOLID,
+        )
+        self.assertEqual(m_cer_solid.block.material, BlockMaterialType.CERAMIC)
+        self.assertEqual(m_cer_solid.block.wall_type, CeramicWallType.SOLID)
+        self.assertAlmostEqual(m_cer_solid.block.fbk, 14.0)
+        self.assertAlmostEqual(m_cer_solid.mortar.fa, 12.0)
+        self.assertAlmostEqual(m_cer_solid.grout.fg, 25.0)
+        self.assertAlmostEqual(m_cer_solid.fpk, 8.4)
+        self.assertAlmostEqual(m_cer_solid.fpgk, 13.4)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from attrs import define, field
+from pymasondesign.materials.enums import BlockMaterialType, CeramicWallType
 from pymasondesign.materials.block import BlockSpecification
 from pymasondesign.materials.mortar import MortarSpecification
 from pymasondesign.materials.grout import GroutSpecification
@@ -35,6 +36,26 @@ class MasonrySpecification:
             raise ValueError(f"fpgk deve ser positivo, obtido {self.fpgk}.")
         if self.elastic_modulus is not None and self.elastic_modulus <= 0:
             raise ValueError(f"elastic_modulus deve ser positivo se fornecido, obtido {self.elastic_modulus}.")
+
+    @classmethod
+    def from_nbr16868(
+        cls,
+        fbk: float,
+        material: BlockMaterialType = BlockMaterialType.CONCRETE,
+        wall_type: CeramicWallType = CeramicWallType.HOLLOW,
+        transverse_joints_filled: bool = True,
+        elastic_modulus: float | None = None,
+    ) -> MasonrySpecification:
+        """Cria uma especificação de alvenaria a partir da tabela oficial da NBR 16868 (concreto ou cerâmico)."""
+        from pymasondesign.materials.factory import NBR16868MasonryFactory
+
+        return NBR16868MasonryFactory.create(
+            fbk=fbk,
+            material=material,
+            wall_type=wall_type,
+            transverse_joints_filled=transverse_joints_filled,
+            elastic_modulus=elastic_modulus,
+        )
 
     @property
     def joint_factor(self) -> float:
