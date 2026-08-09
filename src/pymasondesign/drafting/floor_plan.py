@@ -12,16 +12,11 @@ from pymasondesign.geometry.tolerances import (
     is_at_end,
     is_interior,
 )
+from pymasondesign.common import to_tuple
 from pymasondesign.drafting.enums import BondType, WallEnd
 from pymasondesign.drafting.wall import Wall
 from pymasondesign.drafting.opening import Opening
 from pymasondesign.drafting.junction import Junction, ArrivingWall, PassingWall
-
-
-def _convert_walls(val: tuple[Wall, ...] | list[Wall] | None) -> tuple[Wall, ...]:
-    if val is None:
-        return ()
-    return tuple(val)
 
 
 @define(frozen=True, slots=True)
@@ -36,7 +31,7 @@ class FloorPlan:
 
     plan_id: str = field(converter=str)
     height: float = field(converter=float)
-    walls: tuple[Wall, ...] = field(default=(), converter=_convert_walls)
+    walls: tuple[Wall, ...] = field(default=(), converter=to_tuple)
 
     def __attrs_post_init__(self) -> None:
         if self.height <= 0:

@@ -1,21 +1,10 @@
 from __future__ import annotations
 
 from attrs import define, field
+from pymasondesign.common import to_tuple
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.drafting.enums import BondType, WallEnd
 from pymasondesign.drafting.wall import Wall
-
-
-def _convert_passing(val: tuple[PassingWall, ...] | list[PassingWall] | None) -> tuple[PassingWall, ...]:
-    if val is None:
-        return ()
-    return tuple(val)
-
-
-def _convert_arriving(val: tuple[ArrivingWall, ...] | list[ArrivingWall] | None) -> tuple[ArrivingWall, ...]:
-    if val is None:
-        return ()
-    return tuple(val)
 
 
 @define(frozen=True, slots=True)
@@ -61,8 +50,8 @@ class Junction:
     """
 
     point: Point2D = field()
-    passing_walls: tuple[PassingWall, ...] = field(default=(), converter=_convert_passing)
-    arriving_walls: tuple[ArrivingWall, ...] = field(default=(), converter=_convert_arriving)
+    passing_walls: tuple[PassingWall, ...] = field(default=(), converter=to_tuple)
+    arriving_walls: tuple[ArrivingWall, ...] = field(default=(), converter=to_tuple)
 
     @property
     def total_incident_walls(self) -> int:

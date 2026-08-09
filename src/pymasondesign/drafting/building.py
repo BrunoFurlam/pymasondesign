@@ -1,24 +1,9 @@
 from __future__ import annotations
 
 from attrs import define, field
+from pymasondesign.common import to_tuple
 from pymasondesign.drafting.floor_plan import FloorPlan
 from pymasondesign.drafting.story import Story
-
-
-def _convert_plans(
-    val: tuple[FloorPlan, ...] | list[FloorPlan] | None,
-) -> tuple[FloorPlan, ...]:
-    if val is None:
-        return ()
-    return tuple(val)
-
-
-def _convert_stories(
-    val: tuple[Story, ...] | list[Story] | None,
-) -> tuple[Story, ...]:
-    if val is None:
-        return ()
-    return tuple(val)
 
 
 @define(frozen=True, slots=True)
@@ -35,8 +20,8 @@ class Building:
     """
 
     building_id: str = field(converter=str)
-    floor_plans: tuple[FloorPlan, ...] = field(default=(), converter=_convert_plans)
-    stories: tuple[Story, ...] = field(default=(), converter=_convert_stories)
+    floor_plans: tuple[FloorPlan, ...] = field(default=(), converter=to_tuple)
+    stories: tuple[Story, ...] = field(default=(), converter=to_tuple)
 
     def __attrs_post_init__(self) -> None:
         # 1. Unicidade de story_id

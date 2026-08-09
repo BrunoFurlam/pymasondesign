@@ -168,6 +168,12 @@ Camada de transição entre a topologia física (*drafting*) e o modelo de dimen
 
 ---
 
+### 3.7. `pymasondesign.common` (Utilitários e Helpers Compartilhados)
+Utilitários transversais e conversores genéricos:
+- **`to_tuple`**: Conversor genérico tipado (`Iterable[T] | None -> tuple[T, ...]`), garantindo imutabilidade e simplificação de atributos `attrs` em todas as camadas da biblioteca.
+
+---
+
 ## 4. Fluxo de Dados Típico
 
 ```mermaid

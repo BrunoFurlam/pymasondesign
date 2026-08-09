@@ -1,13 +1,8 @@
 from __future__ import annotations
 
 from attrs import define, field
+from pymasondesign.common import to_tuple
 from pymasondesign.structure.panel import MasonryPanel
-
-
-def _convert_panels(val: tuple[MasonryPanel, ...] | list[MasonryPanel] | None) -> tuple[MasonryPanel, ...]:
-    if val is None:
-        return ()
-    return tuple(val)
 
 
 @define(frozen=True, slots=True)
@@ -20,7 +15,7 @@ class PanelGroup:
     """
 
     group_id: str = field(converter=str)
-    panels: tuple[MasonryPanel, ...] = field(default=(), converter=_convert_panels)
+    panels: tuple[MasonryPanel, ...] = field(default=(), converter=to_tuple)
 
     def __attrs_post_init__(self) -> None:
         if not self.panels:

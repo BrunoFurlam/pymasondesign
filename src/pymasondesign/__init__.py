@@ -52,6 +52,7 @@ from pymasondesign.drafting import (
     Story,
     Building,
 )
+from pymasondesign.common import to_tuple
 from pymasondesign.structure import (
     MasonryPanel,
     PanelGroup,
@@ -111,6 +112,8 @@ __all__ = [
     "FloorPlan",
     "Story",
     "Building",
+    # Utilitários e Helpers comuns
+    "to_tuple",
     # Elementos e dimensionamento estrutural
     "MasonryPanel",
     "PanelGroup",

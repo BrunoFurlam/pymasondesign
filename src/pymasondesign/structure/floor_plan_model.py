@@ -1,14 +1,9 @@
 from __future__ import annotations
 
 from attrs import define, field
+from pymasondesign.common import to_tuple
 from pymasondesign.structure.group import PanelGroup
 from pymasondesign.structure.panel import MasonryPanel
-
-
-def _convert_groups(val: tuple[PanelGroup, ...] | list[PanelGroup] | None) -> tuple[PanelGroup, ...]:
-    if val is None:
-        return ()
-    return tuple(val)
 
 
 @define(frozen=True, slots=True)
@@ -26,7 +21,7 @@ class FloorPlanModel:
 
     plan_id: str = field(converter=str)
     height: float = field(converter=float)
-    groups: tuple[PanelGroup, ...] = field(default=(), converter=_convert_groups)
+    groups: tuple[PanelGroup, ...] = field(default=(), converter=to_tuple)
 
     def __attrs_post_init__(self) -> None:
         if self.height <= 0:

@@ -1,16 +1,11 @@
 from __future__ import annotations
 
 from attrs import define, field
+from pymasondesign.common import to_tuple
 from pymasondesign.geometry.axis import Axis
 from pymasondesign.geometry.tolerances import OVERLAP_TOLERANCE
 from pymasondesign.drafting.enums import BondType, WallEnd
 from pymasondesign.drafting.opening import Opening
-
-
-def _convert_openings(val: tuple[Opening, ...] | list[Opening] | None) -> tuple[Opening, ...]:
-    if val is None:
-        return ()
-    return tuple(val)
 
 
 def _convert_bond(val: BondType | str | None) -> BondType:
@@ -39,7 +34,7 @@ class Wall:
     axis: Axis = field()
     thickness: float = field(converter=float)
     height: float | None = field(default=None)
-    openings: tuple[Opening, ...] = field(default=(), converter=_convert_openings)
+    openings: tuple[Opening, ...] = field(default=(), converter=to_tuple)
     start_bond: BondType = field(default=BondType.NONE, converter=_convert_bond)
     end_bond: BondType = field(default=BondType.NONE, converter=_convert_bond)
 

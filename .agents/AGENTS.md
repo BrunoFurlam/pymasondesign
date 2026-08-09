@@ -53,6 +53,7 @@ Este documento contém as diretrizes mandatórias de desenvolvimento para o repo
 
 ```text
 src/pymasondesign/
+├── common/         # Utilitários e helpers compartilhados (converters, tipos comuns)
 ├── geometry/       # Primitivas vetoriais 2D, eixos, transformações e tolerâncias
 ├── sections/       # Seções transversais estruturais, inércias e componentes compostos
 ├── mechanics/      # Análise de tensões, flexo-compressão biaxial e esforços seccionais

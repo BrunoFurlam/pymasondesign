@@ -1,24 +1,9 @@
 from __future__ import annotations
 
 from attrs import define, field
+from pymasondesign.common import to_tuple
 from pymasondesign.structure.floor_plan_model import FloorPlanModel
 from pymasondesign.structure.story_model import StoryModel
-
-
-def _convert_plans(
-    val: tuple[FloorPlanModel, ...] | list[FloorPlanModel] | None,
-) -> tuple[FloorPlanModel, ...]:
-    if val is None:
-        return ()
-    return tuple(val)
-
-
-def _convert_stories(
-    val: tuple[StoryModel, ...] | list[StoryModel] | None,
-) -> tuple[StoryModel, ...]:
-    if val is None:
-        return ()
-    return tuple(val)
 
 
 @define(frozen=True, slots=True)
@@ -32,8 +17,8 @@ class BuildingModel:
     """
 
     building_id: str = field(converter=str)
-    floor_plan_models: tuple[FloorPlanModel, ...] = field(converter=_convert_plans)
-    stories: tuple[StoryModel, ...] = field(converter=_convert_stories)
+    floor_plan_models: tuple[FloorPlanModel, ...] = field(default=(), converter=to_tuple)
+    stories: tuple[StoryModel, ...] = field(default=(), converter=to_tuple)
 
     def __attrs_post_init__(self) -> None:
         if not self.stories:
