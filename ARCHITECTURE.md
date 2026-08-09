@@ -18,11 +18,11 @@ graph TD
 
     subgraph "pymasondesign (Core)"
         subgraph "Elementos Estruturais (Elements)"
-            ELEM[elements<br/>MasonryPanel, PanelGroup, MasonryPanelService]
+            ELEM[elements<br/>MasonryPanel, PanelGroup, FloorPlanModel, StoryModel, BuildingModel]
         end
 
         subgraph "Lançamento e Topologia (Drafting)"
-            DRAFT[drafting<br/>Story, FloorPlan, Wall, Opening, Junction]
+            DRAFT[drafting<br/>Building, Story, FloorPlan, Wall, Opening, Junction]
         end
 
         subgraph "Mecânica e Análise Seccional (Mechanics)"
@@ -152,7 +152,8 @@ Modelagem arquitetural e estrutural de plantas e pavimentos:
 - **`PassingWall` & `ArrivingWall`**: Representação leve de paredes passantes e incidentes em nós de encontro, identificadas por `wall_id: str`.
 - **`Junction`**: Nó estrutural de encontro de paredes (em L, T, X ou topo a topo), com localização topológica `point`, listas de paredes passantes e incidentes, e métodos de consulta (`has_wall`, `is_passing`, `is_arriving`, `get_participation`).
 - **`FloorPlan`**: Planta baixa de alvenaria estrutural. Agrupa as paredes, calcula comprimento total, valida sobreposições de aberturas, detecta nós de encontro (`find_junctions()`), calcula zonas de exclusão e valida amarrações.
-- **`Story`**: Pavimento estrutural com elevação $z$, altura de pé-direito $H$ e associação com uma `FloorPlan`.
+- **`Story`**: Pavimento estrutural físico no lançamento, associando elevação $Z$, altura piso a piso, especificação de material (`MasonrySpecification`) e referência desacoplada à planta via `plan_id: str`.
+- **`Building`**: Edifício completo no lançamento físico (drafting). Agrega o catálogo de plantas baixas (`floor_plans`) e a coleção de pavimentos (`stories`) mantida e validada em ordem estrita de cima para baixo ($Z$ decrescente). Provê consultas de catálogo, busca de níveis e métodos de mutação funcional (`add_floor_plan`, `add_story`).
 
 ---
 
@@ -161,7 +162,9 @@ Camada de transição entre a topologia física (*drafting*) e o modelo de dimen
 - **`MasonryPanel` (Piers / Painéis Resistentes)**: Segmentos resistentes de parede contínuos delimitados por extremidades de parede, vãos de abertura ou nós de encontro (`panel_id`, `wall_id`, `axis`, `thickness`, `height`, `length`).
 - **`PanelGroup` (Grupos Conexos de Painéis)**: Subconjunto de painéis conectados solidariamente por amarração direta (`BondType.DIRECT`) ou continuidade de parede passante (`group_id`, `panels`, `total_length`, `wall_ids`, `find_panel`).
 - **`FloorPlanModel` (Modelo Estrutural da Planta/Pavimento)**: Modelo estrutural que agrega todos os `PanelGroup` derivados de um `FloorPlan`, permitindo a reutilização em múltiplos pavimentos tipo (`plan_id`, `height`, `groups`, `panels`, `total_length`, `wall_ids`, `find_group`, `find_panel`, `find_groups_by_wall`).
-- **`MasonryPanelService`**: Serviço de domínio responsável pela discretização analítica de paredes em painéis (`derive_panels_from_wall`), extração de componentes conexas de painéis amarrados diretamente (`group_panels_by_direct_bond`) e derivação do modelo estrutural completo (`derive_floor_plan_model`).
+- **`StoryModel` (Modelo Estrutural do Pavimento)**: Modelo estrutural de um nível no edifício, associando cota $Z$, altura piso a piso, especificação de alvenaria e referência por ID (`plan_id`) ao modelo de planta adotado.
+- **`BuildingModel` (Modelo Estrutural da Edificação Completa)**: Modelo global que agrega o catálogo de plantas (`floor_plan_models`) e a coleção de pavimentos (`stories: tuple[StoryModel, ...]`) mantida e validada estritamente **de cima para baixo** (cota $Z$ decrescente) para suporte à acumulação de cargas e dimensionamento estrutural.
+- **`MasonryPanelService`**: Serviço de domínio responsável pela discretização de paredes em painéis (`derive_panels_from_wall`), extração de componentes conexas (`group_panels_by_direct_bond`), derivação do modelo de planta (`derive_floor_plan_model`) e derivação da edificação completa (`derive_building_model`).
 
 ---
 

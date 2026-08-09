@@ -74,10 +74,11 @@ O projeto implementa e segue estritamente as seguintes normas da ABNT (Associaç
 - [x] Lançamento e topologia de pavimentos, plantas, paredes, aberturas e nós de encontro (`pymasondesign.drafting`).
 
 ### Fase 2: Conversão de Drafting para Modelo de Dimensionamento Estrutural (Em Andamento)
-- [x] **Modelos e Serviços de Painéis de Alvenaria (`pymasondesign.elements`)**:
+- [x] **Modelos e Serviços de Painéis e Edificação (`pymasondesign.elements`)**:
   - Implementação de `MasonryPanel` imutável com discretização automática por vãos de abertura e nós de encontro.
   - Implementação de `PanelGroup` e `FloorPlanModel` para representação estrutural da planta/pavimento tipo.
-  - Algoritmos de componentes conexas e derivação no serviço `MasonryPanelService` (`group_panels_by_direct_bond` e `derive_floor_plan_model`).
+  - Implementação de `StoryModel` e `BuildingModel` para representação global da edificação com ordenação top-to-bottom (de cima para baixo).
+  - Algoritmos de componentes conexas e serviços de derivação (`MasonryPanelService.group_panels_by_direct_bond`, `derive_floor_plan_model` e `derive_building_model`).
 - [ ] **Determinação de Abas Colaborantes (Flanges)**:
   - Cálculo analítico de larguras efetivas de flange ($b_f$) em nós em L, T e Cruz (conforme ABNT NBR 16868-1 para amarração direta e indireta).
   - Composição de seções em L, T, U e I para análise de flexo-compressão e rigidez global.

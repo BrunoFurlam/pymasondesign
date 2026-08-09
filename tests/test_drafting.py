@@ -14,6 +14,7 @@ from pymasondesign.drafting import (
     Junction,
     FloorPlan,
     Story,
+    Building,
 )
 
 
@@ -213,7 +214,7 @@ class TestDrafting(unittest.TestCase):
         with self.assertRaises(ValueError):
             FloorPlan(plan_id="PLAN_ERR", height=2.80, walls=(w1, w1))
 
-        # Story referenciando a planta
+        # Story referenciando a planta por ID
         masonry = MasonrySpecification.from_nbr16868(fbk=14.0)
 
         story1 = Story(
@@ -221,7 +222,7 @@ class TestDrafting(unittest.TestCase):
             elevation=0.0,
             story_height=3.00,
             masonry_spec=masonry,
-            floor_plan=floor_plan,
+            plan_id="PLAN_TIPO",
         )
 
         story2 = Story(
@@ -229,13 +230,93 @@ class TestDrafting(unittest.TestCase):
             elevation=3.00,
             story_height=3.00,
             masonry_spec=masonry,
-            floor_plan=floor_plan,
+            plan_id="PLAN_TIPO",
         )
 
-        # Clear height deriva da planta compartilhada
-        self.assertAlmostEqual(story1.clear_height, 2.80)
-        self.assertAlmostEqual(story2.clear_height, 2.80)
-        self.assertEqual(story1.floor_plan, story2.floor_plan)
+        self.assertEqual(story1.story_id, "PAV_01")
+        self.assertEqual(story1.plan_id, "PLAN_TIPO")
+        self.assertAlmostEqual(story1.elevation, 0.0)
+        self.assertAlmostEqual(story1.story_height, 3.00)
+        self.assertEqual(story2.story_id, "PAV_02")
+        self.assertEqual(story2.plan_id, "PLAN_TIPO")
+
+        # Validação de story_height <= 0
+        with self.assertRaises(ValueError):
+            Story(story_id="ERR", elevation=0.0, story_height=0.0, masonry_spec=masonry, plan_id="PLAN_TIPO")
+
+    def test_building_creation_properties_and_validations(self):
+        masonry = MasonrySpecification.from_nbr16868(fbk=14.0)
+        w1 = Wall(wall_id="P1", axis=Axis(Point2D(0, 0), Point2D(5, 0)), thickness=0.14)
+        plan_tipo = FloorPlan(plan_id="PLAN_TIPO", height=2.80, walls=(w1,))
+
+        w2 = Wall(wall_id="P2", axis=Axis(Point2D(0, 0), Point2D(8, 0)), thickness=0.19)
+        plan_terreo = FloorPlan(plan_id="PLAN_TERREO", height=3.00, walls=(w2,))
+
+        st_cob = Story(story_id="COBERTURA", elevation=9.0, story_height=3.00, masonry_spec=masonry, plan_id="PLAN_TIPO")
+        st_p2 = Story(story_id="PAV_02", elevation=6.0, story_height=3.00, masonry_spec=masonry, plan_id="PLAN_TIPO")
+        st_p1 = Story(story_id="PAV_01", elevation=3.0, story_height=3.00, masonry_spec=masonry, plan_id="PLAN_TIPO")
+        st_ter = Story(story_id="TERREO", elevation=0.0, story_height=3.00, masonry_spec=masonry, plan_id="PLAN_TERREO")
+
+        building = Building(
+            building_id="EDIF_AURORA",
+            floor_plans=(plan_tipo, plan_terreo),
+            stories=(st_cob, st_p2, st_p1, st_ter),
+        )
+
+        self.assertEqual(building.building_id, "EDIF_AURORA")
+        self.assertEqual(building.num_stories, 4)
+        self.assertEqual(building.top_story.story_id, "COBERTURA")
+        self.assertEqual(building.bottom_story.story_id, "TERREO")
+        # Altura total: (9.0 + 3.0) - 0.0 = 12.0
+        self.assertAlmostEqual(building.total_height, 12.0)
+
+        # Consultas de catálogo
+        self.assertIs(building.get_floor_plan("PLAN_TIPO"), plan_tipo)
+        self.assertIs(building.get_floor_plan("PLAN_TERREO"), plan_terreo)
+        self.assertIsNone(building.get_floor_plan("PLAN_UNKNOWN"))
+
+        # Consultas de pavimentos
+        self.assertIs(building.find_story("PAV_01"), st_p1)
+        self.assertIsNone(building.find_story("PAV_UNKNOWN"))
+        self.assertEqual(len(building.find_stories_by_plan("PLAN_TIPO")), 3)
+        self.assertEqual(len(building.find_stories_by_plan("PLAN_TERREO")), 1)
+
+        # get_story_floor_plan
+        self.assertIs(building.get_story_floor_plan(st_p1), plan_tipo)
+        self.assertIs(building.get_story_floor_plan("TERREO"), plan_terreo)
+        with self.assertRaises(KeyError):
+            building.get_story_floor_plan("NONEXISTENT")
+
+        # Validações de Building:
+        # 1. ID de pavimento duplicado
+        with self.assertRaises(ValueError):
+            Building("ERR", floor_plans=(plan_tipo,), stories=(st_p1, st_p1))
+
+        # 2. ID de planta duplicado no catálogo
+        with self.assertRaises(ValueError):
+            Building("ERR", floor_plans=(plan_tipo, plan_tipo), stories=(st_p1,))
+
+        # 3. Integridade referencial
+        st_missing = Story("ERR", elevation=0.0, story_height=3.0, masonry_spec=masonry, plan_id="PLAN_MISSING")
+        with self.assertRaises(ValueError):
+            Building("ERR", floor_plans=(plan_tipo,), stories=(st_missing,))
+
+        # 4. Ordenação Z não decrescente
+        with self.assertRaises(ValueError):
+            Building("ERR", floor_plans=(plan_tipo,), stories=(st_p1, st_p2))
+
+        # Métodos funcionais add_floor_plan e add_story
+        b_init = Building("EDIF_MUT", floor_plans=(plan_tipo,))
+        self.assertEqual(b_init.total_height, 0.0)
+        self.assertIsNone(b_init.top_story)
+
+        b_with_plan = b_init.add_floor_plan(plan_terreo)
+        self.assertEqual(len(b_with_plan.floor_plans), 2)
+
+        # Adicionar pavimentos fora de ordem que são auto-ordenados por Z decrescente
+        b_with_st1 = b_with_plan.add_story(st_p1)
+        b_with_st2 = b_with_st1.add_story(st_cob)
+        self.assertEqual([s.story_id for s in b_with_st2.stories], ["COBERTURA", "PAV_01"])
 
     def test_wall_bond_and_junction_detection(self):
         # 1. Default é BondType.NONE (extremidade livre / sem encontro)

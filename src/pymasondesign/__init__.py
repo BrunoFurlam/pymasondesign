@@ -50,11 +50,14 @@ from pymasondesign.drafting import (
     Junction,
     FloorPlan,
     Story,
+    Building,
 )
 from pymasondesign.elements import (
     MasonryPanel,
     PanelGroup,
     FloorPlanModel,
+    StoryModel,
+    BuildingModel,
     MasonryPanelService,
 )
 
@@ -107,10 +110,13 @@ __all__ = [
     "Junction",
     "FloorPlan",
     "Story",
+    "Building",
     # Elementos e dimensionamento estrutural
     "MasonryPanel",
     "PanelGroup",
     "FloorPlanModel",
+    "StoryModel",
+    "BuildingModel",
     "MasonryPanelService",
     "__version__",
 ]

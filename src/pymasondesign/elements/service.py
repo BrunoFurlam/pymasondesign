@@ -14,9 +14,13 @@ from pymasondesign.drafting.junction import Junction, PassingWall, ArrivingWall
 from pymasondesign.elements.panel import MasonryPanel
 from pymasondesign.elements.group import PanelGroup
 from pymasondesign.elements.floor_plan_model import FloorPlanModel
+from pymasondesign.elements.story_model import StoryModel
+from pymasondesign.elements.building_model import BuildingModel
 
 if TYPE_CHECKING:
     from pymasondesign.drafting.floor_plan import FloorPlan
+    from pymasondesign.drafting.story import Story
+    from pymasondesign.drafting.building import Building
 
 
 class MasonryPanelService:
@@ -242,4 +246,45 @@ class MasonryPanelService:
             plan_id=floor_plan.plan_id,
             height=floor_plan.height,
             groups=groups,
+        )
+
+    @staticmethod
+    def derive_building_model(
+        building: Building,
+    ) -> BuildingModel:
+        """Deriva o modelo estrutural da edificação completa (BuildingModel) a partir de um Building de lançamento.
+
+        - Discretiza e constrói o catálogo de FloorPlanModel para todas as plantas do edifício.
+        - Converte cada Story em StoryModel.
+        - Preserva a ordenação estrita de cima para baixo (cota Z decrescente).
+
+        Args:
+            building: Edifício físico de lançamento contendo plantas e pavimentos.
+
+        Returns:
+            Instância imutável de BuildingModel contendo o catálogo de plantas e os pavimentos ordenados.
+        """
+        if not building.stories:
+            raise ValueError(f"O edifício '{building.building_id}' não possui pavimentos para derivar o modelo.")
+
+        distinct_plans = {
+            fp.plan_id: MasonryPanelService.derive_floor_plan_model(fp)
+            for fp in building.floor_plans
+        }
+
+        building_stories = tuple(
+            StoryModel(
+                story_id=st.story_id,
+                elevation=st.elevation,
+                story_height=st.story_height,
+                masonry_spec=st.masonry_spec,
+                plan_id=st.plan_id,
+            )
+            for st in building.stories
+        )
+
+        return BuildingModel(
+            building_id=building.building_id,
+            floor_plan_models=tuple(distinct_plans.values()),
+            stories=building_stories,
         )

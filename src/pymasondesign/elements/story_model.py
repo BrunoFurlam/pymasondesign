@@ -5,15 +5,15 @@ from pymasondesign.materials.masonry import MasonrySpecification
 
 
 @define(frozen=True, slots=True)
-class Story:
-    """Representação de um pavimento/nível físico do edifício de alvenaria estrutural no lançamento.
+class StoryModel:
+    """Modelo estrutural de um pavimento na edificação, associando cota vertical, material e referência ao modelo de planta.
 
     Attributes:
-        story_id: Identificador único do pavimento (ex.: "PAV_01", "PAV_02", "TERREO").
-        elevation: Cota vertical Z do piso acabado em relação à origem do projeto.
-        story_height: Altura total piso a piso em metros ou cm (story_height > 0).
+        story_id: Identificador único do nível (ex.: "COBERTURA", "PAV_03", "PAV_02", "TERREO").
+        elevation: Cota vertical Z do piso acabado em relação à base do edifício.
+        story_height: Altura total piso a piso (story_height > 0).
         masonry_spec: Especificação da alvenaria estrutural que rege o pavimento.
-        plan_id: Identificador da planta baixa (FloorPlan) adotada neste nível (ex.: "PLAN_TIPO").
+        plan_id: Identificador do modelo de planta (FloorPlanModel) adotado neste nível (ex.: "PLAN_TIPO").
     """
 
     story_id: str = field(converter=str)
@@ -25,4 +25,3 @@ class Story:
     def __attrs_post_init__(self) -> None:
         if self.story_height <= 0:
             raise ValueError(f"story_height deve ser positivo, obtido {self.story_height}.")
-
