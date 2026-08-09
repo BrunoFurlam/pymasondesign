@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from attrs import define, field
-from pymasondesign.elements.panel import MasonryPanel
+from pymasondesign.structure.panel import MasonryPanel
 
 
 def _convert_panels(val: tuple[MasonryPanel, ...] | list[MasonryPanel] | None) -> tuple[MasonryPanel, ...]:

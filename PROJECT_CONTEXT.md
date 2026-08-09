@@ -74,7 +74,7 @@ O projeto implementa e segue estritamente as seguintes normas da ABNT (Associaç
 - [x] Lançamento e topologia de pavimentos, plantas, paredes, aberturas e nós de encontro (`pymasondesign.drafting`).
 
 ### Fase 2: Conversão de Drafting para Modelo de Dimensionamento Estrutural (Em Andamento)
-- [x] **Modelos e Serviços de Painéis e Edificação (`pymasondesign.elements`)**:
+- [x] **Modelos e Serviços de Painéis e Edificação (`pymasondesign.structure`)**:
   - Implementação de `MasonryPanel` imutável com discretização automática por vãos de abertura e nós de encontro.
   - Implementação de `PanelGroup` e `FloorPlanModel` para representação estrutural da planta/pavimento tipo.
   - Implementação de `StoryModel` e `BuildingModel` para representação global da edificação com ordenação top-to-bottom (de cima para baixo).

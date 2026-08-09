@@ -17,8 +17,8 @@ graph TD
     end
 
     subgraph "pymasondesign (Core)"
-        subgraph "Elementos Estruturais (Elements)"
-            ELEM[elements<br/>MasonryPanel, PanelGroup, FloorPlanModel, StoryModel, BuildingModel]
+        subgraph "Modelo Estrutural Analítico (Structure)"
+            STRUCT[structure<br/>BuildingModel, StoryModel, FloorPlanModel, MasonryPanel, PanelGroup]
         end
 
         subgraph "Lançamento e Topologia (Drafting)"
@@ -157,7 +157,7 @@ Modelagem arquitetural e estrutural de plantas e pavimentos:
 
 ---
 
-### 3.6. `pymasondesign.elements` (Modelos e Serviços de Elementos Estruturais)
+### 3.6. `pymasondesign.structure` (Modelos e Serviços de Estrutura Analítica)
 Camada de transição entre a topologia física (*drafting*) e o modelo de dimensionamento analítico:
 - **`MasonryPanel` (Piers / Painéis Resistentes)**: Segmentos resistentes de parede contínuos delimitados por extremidades de parede, vãos de abertura ou nós de encontro (`panel_id`, `wall_id`, `axis`, `thickness`, `height`, `length`).
 - **`PanelGroup` (Grupos Conexos de Painéis)**: Subconjunto de painéis conectados solidariamente por amarração direta (`BondType.DIRECT`) ou continuidade de parede passante (`group_id`, `panels`, `total_length`, `wall_ids`, `find_panel`).
@@ -174,16 +174,16 @@ Camada de transição entre a topologia física (*drafting*) e o modelo de dimen
 sequenceDiagram
     participant User as Engenheiro / Plugin BIM
     participant Drafting as Drafting (FloorPlan / Wall)
-    participant Elements as Elements (MasonryPanelService)
+    participant Struct as Structure (MasonryPanelService)
     participant Sect as Sections (SectionProperties)
     participant Mech as Mechanics & Design (MechanicsService)
 
     User->>Drafting: Cria paredes e aberturas na FloorPlan
     Drafting-->>Drafting: Valida topologia e detecta Junctions
-    Drafting->>Elements: Discretiza paredes em MasonryPanels e PanelGroups
-    Elements-->>Elements: Agrupa painéis por amarração direta
-    Elements->>Sect: Gera seções transversais (simples e compostas)
-    Sect-->>Elements: Propriedades seccionais (A, CG, Ixx, Iyy, W)
+    Drafting->>Struct: Discretiza paredes em MasonryPanels e PanelGroups
+    Struct-->>Struct: Agrupa painéis por amarração direta
+    Struct->>Sect: Gera seções transversais (simples e compostas)
+    Sect-->>Struct: Propriedades seccionais (A, CG, Ixx, Iyy, W)
     User->>Mech: Aplica carregamentos / ações nos elementos
     Mech->>Mech: Calcula planos de tensão, flexo-compressão e esbeltez
     Mech-->>User: Verificações normativas ELU/ELS

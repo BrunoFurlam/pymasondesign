@@ -16,7 +16,7 @@ from pymasondesign.drafting import (
     Building,
 )
 from pymasondesign.materials import NBR16868MasonryFactory
-from pymasondesign.elements import (
+from pymasondesign.structure import (
     MasonryPanel,
     PanelGroup,
     FloorPlanModel,
@@ -26,7 +26,7 @@ from pymasondesign.elements import (
 )
 
 
-class TestElements(unittest.TestCase):
+class TestStructure(unittest.TestCase):
     def test_masonry_panel_attributes_and_validations(self):
         axis = Axis(start=Point2D(0.0, 0.0), end=Point2D(4.0, 3.0))
         panel = MasonryPanel(

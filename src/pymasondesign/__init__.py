@@ -52,7 +52,7 @@ from pymasondesign.drafting import (
     Story,
     Building,
 )
-from pymasondesign.elements import (
+from pymasondesign.structure import (
     MasonryPanel,
     PanelGroup,
     FloorPlanModel,

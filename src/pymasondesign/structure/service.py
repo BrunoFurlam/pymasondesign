@@ -11,11 +11,11 @@ from pymasondesign.geometry.tolerances import (
 from pymasondesign.drafting.enums import BondType
 from pymasondesign.drafting.wall import Wall
 from pymasondesign.drafting.junction import Junction, PassingWall, ArrivingWall
-from pymasondesign.elements.panel import MasonryPanel
-from pymasondesign.elements.group import PanelGroup
-from pymasondesign.elements.floor_plan_model import FloorPlanModel
-from pymasondesign.elements.story_model import StoryModel
-from pymasondesign.elements.building_model import BuildingModel
+from pymasondesign.structure.panel import MasonryPanel
+from pymasondesign.structure.group import PanelGroup
+from pymasondesign.structure.floor_plan_model import FloorPlanModel
+from pymasondesign.structure.story_model import StoryModel
+from pymasondesign.structure.building_model import BuildingModel
 
 if TYPE_CHECKING:
     from pymasondesign.drafting.floor_plan import FloorPlan

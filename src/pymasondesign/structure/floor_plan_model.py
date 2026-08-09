@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from attrs import define, field
-from pymasondesign.elements.group import PanelGroup
-from pymasondesign.elements.panel import MasonryPanel
+from pymasondesign.structure.group import PanelGroup
+from pymasondesign.structure.panel import MasonryPanel
 
 
 def _convert_groups(val: tuple[PanelGroup, ...] | list[PanelGroup] | None) -> tuple[PanelGroup, ...]:

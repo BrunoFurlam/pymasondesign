@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from attrs import define, field
-from pymasondesign.elements.floor_plan_model import FloorPlanModel
-from pymasondesign.elements.story_model import StoryModel
+from pymasondesign.structure.floor_plan_model import FloorPlanModel
+from pymasondesign.structure.story_model import StoryModel
 
 
 def _convert_plans(

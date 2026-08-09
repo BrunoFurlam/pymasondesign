@@ -57,7 +57,8 @@ src/pymasondesign/
 ├── sections/       # Seções transversais estruturais, inércias e componentes compostos
 ├── mechanics/      # Análise de tensões, flexo-compressão biaxial e esforços seccionais
 ├── materials/      # Especificação de materiais e compósitos (blocos, argamassa, graute, aço)
-└── drafting/       # Lançamento estrutural de pavimentos, paredes, vãos e encontros
+├── drafting/       # Lançamento estrutural de pavimentos, paredes, vãos e encontros
+└── structure/      # Modelo analítico estrutural (BuildingModel, StoryModel, FloorPlanModel, painéis e grupos)
 ```
 
 - Nomes de arquivos: `snake_case.py`
