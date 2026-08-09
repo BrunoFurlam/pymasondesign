@@ -6,6 +6,9 @@ from pymasondesign.geometry import (
     BoundingBox,
     Transform2D,
     Polygon,
+    Axis,
+    AxisRelation,
+    AxisIntersectionResult,
 )
 from pymasondesign.sections import (
     Section,
@@ -37,6 +40,17 @@ from pymasondesign.materials import (
     NBR16868TableEntry,
     NBR16868MasonryFactory,
 )
+from pymasondesign.drafting import (
+    OpeningType,
+    BondType,
+    WallEnd,
+    Opening,
+    Wall,
+    ArrivingWall,
+    Junction,
+    FloorPlan,
+    Story,
+)
 
 __version__ = "0.1.0"
 
@@ -47,6 +61,9 @@ __all__ = [
     "BoundingBox",
     "Transform2D",
     "Polygon",
+    "Axis",
+    "AxisRelation",
+    "AxisIntersectionResult",
     # Seções transversais estruturais
     "Section",
     "SectionProperties",
@@ -74,5 +91,15 @@ __all__ = [
     "MasonrySpecification",
     "NBR16868TableEntry",
     "NBR16868MasonryFactory",
+    # Lançamento estrutural (Drafting)
+    "OpeningType",
+    "BondType",
+    "WallEnd",
+    "Opening",
+    "Wall",
+    "ArrivingWall",
+    "Junction",
+    "FloorPlan",
+    "Story",
     "__version__",
 ]

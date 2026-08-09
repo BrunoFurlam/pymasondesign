@@ -4,6 +4,7 @@ from attrs import define, field
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.bounds import BoundingBox
 from pymasondesign.geometry.transform import Transform2D
+from pymasondesign.geometry.tolerances import DIVISION_GUARD
 
 
 @define(frozen=True, slots=True)
@@ -101,7 +102,7 @@ class Polygon:
             xi, yi = pts[i].x, pts[i].y
             xj, yj = pts[j].x, pts[j].y
 
-            intersect = ((yi > y) != (yj > y)) and (x < (xj - xi) * (y - yi) / (yj - yi + 1e-15) + xi)
+            intersect = ((yi > y) != (yj > y)) and (x < (xj - xi) * (y - yi) / (yj - yi + DIVISION_GUARD) + xi)
             if intersect:
                 inside = not inside
 

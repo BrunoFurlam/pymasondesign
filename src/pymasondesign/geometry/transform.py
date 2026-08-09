@@ -4,6 +4,7 @@ import math
 from attrs import define, field
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.vector import Vector2D
+from pymasondesign.geometry.tolerances import GEOMETRIC_TOLERANCE
 
 
 @define(frozen=True, slots=True)
@@ -40,7 +41,7 @@ class Transform2D:
     @property
     def is_orthogonal(self) -> bool:
         """Indica se os eixos locais são perpendiculares entre si: u . v == 0."""
-        return math.isclose(self.u_axis.dot(self.v_axis), 0.0, abs_tol=1e-9)
+        return math.isclose(self.u_axis.dot(self.v_axis), 0.0, abs_tol=GEOMETRIC_TOLERANCE)
 
     @classmethod
     def identity(cls) -> Transform2D:
