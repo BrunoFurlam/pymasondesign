@@ -160,7 +160,8 @@ Modelagem arquitetural e estrutural de plantas e pavimentos:
 Camada de transição entre a topologia física (*drafting*) e o modelo de dimensionamento analítico:
 - **`MasonryPanel` (Piers / Painéis Resistentes)**: Segmentos resistentes de parede contínuos delimitados por extremidades de parede, vãos de abertura ou nós de encontro (`panel_id`, `wall_id`, `axis`, `thickness`, `height`, `length`).
 - **`PanelGroup` (Grupos Conexos de Painéis)**: Subconjunto de painéis conectados solidariamente por amarração direta (`BondType.DIRECT`) ou continuidade de parede passante (`group_id`, `panels`, `total_length`, `wall_ids`, `find_panel`).
-- **`MasonryPanelService`**: Serviço de domínio responsável pela discretização analítica de paredes em painéis (`derive_panels_from_wall`) e extração de componentes conexas de painéis amarrados diretamente (`group_panels_by_direct_bond`).
+- **`FloorPlanModel` (Modelo Estrutural da Planta/Pavimento)**: Modelo estrutural que agrega todos os `PanelGroup` derivados de um `FloorPlan`, permitindo a reutilização em múltiplos pavimentos tipo (`plan_id`, `height`, `groups`, `panels`, `total_length`, `wall_ids`, `find_group`, `find_panel`, `find_groups_by_wall`).
+- **`MasonryPanelService`**: Serviço de domínio responsável pela discretização analítica de paredes em painéis (`derive_panels_from_wall`), extração de componentes conexas de painéis amarrados diretamente (`group_panels_by_direct_bond`) e derivação do modelo estrutural completo (`derive_floor_plan_model`).
 
 ---
 

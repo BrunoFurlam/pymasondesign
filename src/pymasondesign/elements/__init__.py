@@ -2,11 +2,13 @@
 
 from pymasondesign.elements.panel import MasonryPanel
 from pymasondesign.elements.group import PanelGroup
+from pymasondesign.elements.floor_plan_model import FloorPlanModel
 from pymasondesign.elements.service import MasonryPanelService
 
 __all__ = [
     "MasonryPanel",
     "PanelGroup",
+    "FloorPlanModel",
     "MasonryPanelService",
 ]
 

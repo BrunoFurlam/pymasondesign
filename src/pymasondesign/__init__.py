@@ -54,6 +54,7 @@ from pymasondesign.drafting import (
 from pymasondesign.elements import (
     MasonryPanel,
     PanelGroup,
+    FloorPlanModel,
     MasonryPanelService,
 )
 
@@ -109,6 +110,7 @@ __all__ = [
     # Elementos e dimensionamento estrutural
     "MasonryPanel",
     "PanelGroup",
+    "FloorPlanModel",
     "MasonryPanelService",
     "__version__",
 ]

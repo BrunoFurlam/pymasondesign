@@ -76,7 +76,8 @@ O projeto implementa e segue estritamente as seguintes normas da ABNT (Associaç
 ### Fase 2: Conversão de Drafting para Modelo de Dimensionamento Estrutural (Em Andamento)
 - [x] **Modelos e Serviços de Painéis de Alvenaria (`pymasondesign.elements`)**:
   - Implementação de `MasonryPanel` imutável com discretização automática por vãos de abertura e nós de encontro.
-  - Implementação de `PanelGroup` e algoritmo de componentes conexas por amarração direta (`MasonryPanelService.group_panels_by_direct_bond`).
+  - Implementação de `PanelGroup` e `FloorPlanModel` para representação estrutural da planta/pavimento tipo.
+  - Algoritmos de componentes conexas e derivação no serviço `MasonryPanelService` (`group_panels_by_direct_bond` e `derive_floor_plan_model`).
 - [ ] **Determinação de Abas Colaborantes (Flanges)**:
   - Cálculo analítico de larguras efetivas de flange ($b_f$) em nós em L, T e Cruz (conforme ABNT NBR 16868-1 para amarração direta e indireta).
   - Composição de seções em L, T, U e I para análise de flexo-compressão e rigidez global.

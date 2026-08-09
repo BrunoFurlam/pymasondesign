@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from pymasondesign.geometry import Point2D, Axis
 from pymasondesign.drafting import Wall, Opening, OpeningType, Junction, PassingWall, ArrivingWall, WallEnd, BondType
-from pymasondesign.elements import MasonryPanel, PanelGroup, MasonryPanelService
+from pymasondesign.elements import MasonryPanel, PanelGroup, FloorPlanModel, MasonryPanelService
 
 
 class TestElements(unittest.TestCase):
@@ -309,6 +309,114 @@ class TestElements(unittest.TestCase):
         self.assertEqual(len(groups), 2)
         self.assertEqual(len(groups[0].panels), 1)
         self.assertEqual(len(groups[1].panels), 1)
+
+    def test_floor_plan_model_creation_and_properties(self):
+        p1 = MasonryPanel(
+            panel_id="P1_P1",
+            wall_id="P1",
+            axis=Axis(Point2D(0, 0), Point2D(3, 0)),
+            thickness=0.14,
+            height=2.80,
+        )
+        p2 = MasonryPanel(
+            panel_id="P2_P1",
+            wall_id="P2",
+            axis=Axis(Point2D(3, 0), Point2D(3, 4)),
+            thickness=0.14,
+            height=2.80,
+        )
+        p3 = MasonryPanel(
+            panel_id="P3_P1",
+            wall_id="P3",
+            axis=Axis(Point2D(10, 0), Point2D(15, 0)),
+            thickness=0.14,
+            height=2.80,
+        )
+
+        g1 = PanelGroup(group_id="PG1", panels=(p1, p2))
+        g2 = PanelGroup(group_id="PG2", panels=(p3,))
+
+        model = FloorPlanModel(plan_id="PLAN_TIPO", height=2.80, groups=(g1, g2))
+
+        self.assertEqual(model.plan_id, "PLAN_TIPO")
+        self.assertAlmostEqual(model.height, 2.80)
+        self.assertEqual(len(model.groups), 2)
+        self.assertEqual(len(model.panels), 3)
+        self.assertAlmostEqual(model.total_length, 12.0)  # 3 + 4 + 5 = 12
+        self.assertEqual(model.wall_ids, ("P1", "P2", "P3"))
+
+        # Consultas de busca
+        self.assertIs(model.find_group("PG1"), g1)
+        self.assertIs(model.find_group("PG2"), g2)
+        self.assertIsNone(model.find_group("PG_UNKNOWN"))
+
+        self.assertIs(model.find_panel("P1_P1"), p1)
+        self.assertIs(model.find_panel("P3_P1"), p3)
+        self.assertIsNone(model.find_panel("P_NONEXISTENT"))
+
+        # Busca de grupos por parede
+        self.assertEqual(model.find_groups_by_wall("P1"), (g1,))
+        self.assertEqual(model.find_groups_by_wall("P2"), (g1,))
+        self.assertEqual(model.find_groups_by_wall("P3"), (g2,))
+        self.assertEqual(model.find_groups_by_wall("P_NONE"), ())
+
+    def test_floor_plan_model_validations(self):
+        p1 = MasonryPanel(
+            panel_id="P1_P1",
+            wall_id="P1",
+            axis=Axis(Point2D(0, 0), Point2D(3, 0)),
+            thickness=0.14,
+            height=2.80,
+        )
+        g1 = PanelGroup(group_id="PG1", panels=(p1,))
+        g1_dup = PanelGroup(group_id="PG1", panels=(p1,))
+
+        # Altura <= 0 inválida
+        with self.assertRaises(ValueError):
+            FloorPlanModel(plan_id="PLAN_INV", height=0.0, groups=(g1,))
+
+        # Grupos vazios inválidos
+        with self.assertRaises(ValueError):
+            FloorPlanModel(plan_id="PLAN_EMPTY", height=2.80, groups=())
+
+        # ID de grupo duplicado
+        with self.assertRaises(ValueError):
+            FloorPlanModel(plan_id="PLAN_DUP", height=2.80, groups=(g1, g1_dup))
+
+    def test_derive_floor_plan_model(self):
+        from pymasondesign.drafting import FloorPlan
+
+        # Planta com parede em L (amarração direta) e parede isolada
+        w1 = Wall(
+            wall_id="W1",
+            axis=Axis(start=Point2D(0.0, 0.0), end=Point2D(5.0, 0.0)),
+            thickness=0.14,
+            end_bond=BondType.DIRECT,
+        )
+        w2 = Wall(
+            wall_id="W2",
+            axis=Axis(start=Point2D(5.0, 0.0), end=Point2D(5.0, 4.0)),
+            thickness=0.14,
+            start_bond=BondType.DIRECT,
+        )
+        w3 = Wall(
+            wall_id="W3",
+            axis=Axis(start=Point2D(10.0, 0.0), end=Point2D(14.0, 0.0)),
+            thickness=0.14,
+        )
+
+        plan = FloorPlan(plan_id="PLAN_PAV_01", height=2.80, walls=(w1, w2, w3))
+
+        model = MasonryPanelService.derive_floor_plan_model(plan)
+
+        self.assertEqual(model.plan_id, "PLAN_PAV_01")
+        self.assertAlmostEqual(model.height, 2.80)
+        self.assertEqual(len(model.groups), 2)  # PG1 (W1 + W2) e PG2 (W3)
+        self.assertEqual(len(model.panels), 3)
+        self.assertAlmostEqual(model.total_length, 13.0)  # 5 + 4 + 4 = 13.0
+        self.assertIn("W1", model.wall_ids)
+        self.assertIn("W2", model.wall_ids)
+        self.assertIn("W3", model.wall_ids)
 
 
 if __name__ == "__main__":

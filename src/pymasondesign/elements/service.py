@@ -13,6 +13,7 @@ from pymasondesign.drafting.wall import Wall
 from pymasondesign.drafting.junction import Junction, PassingWall, ArrivingWall
 from pymasondesign.elements.panel import MasonryPanel
 from pymasondesign.elements.group import PanelGroup
+from pymasondesign.elements.floor_plan_model import FloorPlanModel
 
 if TYPE_CHECKING:
     from pymasondesign.drafting.floor_plan import FloorPlan
@@ -225,3 +226,20 @@ class MasonryPanelService:
                 group_counter += 1
 
         return tuple(groups)
+
+    @staticmethod
+    def derive_floor_plan_model(floor_plan: FloorPlan) -> FloorPlanModel:
+        """Deriva o modelo estrutural da planta baixa (FloorPlanModel) contendo todos os grupos de painéis.
+
+        Args:
+            floor_plan: Planta baixa contendo as paredes, aberturas e configurações de amarração.
+
+        Returns:
+            Instância imutável de FloorPlanModel com os grupos de painéis conectados por amarração direta.
+        """
+        groups = MasonryPanelService.group_panels_by_direct_bond(floor_plan)
+        return FloorPlanModel(
+            plan_id=floor_plan.plan_id,
+            height=floor_plan.height,
+            groups=groups,
+        )
