@@ -51,6 +51,11 @@ from pymasondesign.drafting import (
     FloorPlan,
     Story,
 )
+from pymasondesign.elements import (
+    MasonryPanel,
+    PanelGroup,
+    MasonryPanelService,
+)
 
 __version__ = "0.1.0"
 
@@ -101,5 +106,9 @@ __all__ = [
     "Junction",
     "FloorPlan",
     "Story",
+    # Elementos e dimensionamento estrutural
+    "MasonryPanel",
+    "PanelGroup",
+    "MasonryPanelService",
     "__version__",
 ]

@@ -105,6 +105,18 @@ class Axis:
         u = self.direction
         return Point2D(self.start.x + distance * u.x, self.start.y + distance * u.y)
 
+    def projected_offset(self, point: Point2D) -> float:
+        """Calcula a distância escalar da projeção ortogonal de um ponto 2D sobre a reta suporte do eixo, a partir de start.
+
+        Args:
+            point: Ponto 2D no plano XY (pode ou não estar contido no segmento do eixo).
+
+        Returns:
+            Distância escalar ao longo da direção do eixo (0.0 em start, length em end).
+        """
+        v = Vector2D(point.x - self.start.x, point.y - self.start.y)
+        return v.dot(self.direction)
+
     def reversed(self) -> Axis:
         """Retorna o eixo com a orientação invertida (start e end trocados)."""
         return Axis(start=self.end, end=self.start)

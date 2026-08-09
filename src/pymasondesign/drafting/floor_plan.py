@@ -136,11 +136,9 @@ class FloorPlan:
             junctions = self.find_junctions()
             has_junction = False
             for j in junctions:
-                for aw in j.arriving_walls:
-                    if aw.wall.wall_id == wall_id and aw.wall_end == wall_end:
-                        has_junction = True
-                        break
-                if has_junction:
+                part = j.get_participation(wall_id)
+                if isinstance(part, ArrivingWall) and part.wall_end == wall_end:
+                    has_junction = True
                     break
 
             if not has_junction:
@@ -218,7 +216,7 @@ class FloorPlan:
                             arriving.append(ArrivingWall.from_wall(wall, WallEnd.END))
                         # Passando no interior (0 < t < 1)
                         elif is_interior(t, tolerance):
-                            passing.append(PassingWall.from_wall_and_parameter(wall, t))
+                            passing.append(PassingWall(wall_id=wall.wall_id))
 
             if len(passing) + len(arriving) >= 2:
                 junctions.append(
@@ -253,44 +251,50 @@ class FloorPlan:
         for j in junctions:
             # 1. Caso o target_wall passe pela junção (PassingWall)
             for pw in j.passing_walls:
-                if pw.wall.wall_id == wall_id:
-                    offset = pw.offset
+                if pw.wall_id == wall_id:
+                    offset = target_wall.axis.projected_offset(j.point)
                     # Para todas as outras paredes na junção
                     for other_pw in j.passing_walls:
-                        if other_pw.wall.wall_id != wall_id:
-                            delta_s = self._calc_projected_half_thickness(v1, mag_v1, other_pw.wall)
-                            s_min = max(0.0, offset - delta_s)
-                            s_max = min(wall_len, offset + delta_s)
-                            intervals.append((s_min, s_max, other_pw.wall.wall_id))
+                        if other_pw.wall_id != wall_id:
+                            other_w = self.find_wall(other_pw.wall_id)
+                            if other_w is not None:
+                                delta_s = self._calc_projected_half_thickness(v1, mag_v1, other_w)
+                                s_min = max(0.0, offset - delta_s)
+                                s_max = min(wall_len, offset + delta_s)
+                                intervals.append((s_min, s_max, other_pw.wall_id))
                     for other_aw in j.arriving_walls:
-                        if other_aw.wall.wall_id != wall_id:
-                            delta_s = self._calc_projected_half_thickness(v1, mag_v1, other_aw.wall)
-                            s_min = max(0.0, offset - delta_s)
-                            s_max = min(wall_len, offset + delta_s)
-                            intervals.append((s_min, s_max, other_aw.wall.wall_id))
+                        if other_aw.wall_id != wall_id:
+                            other_w = self.find_wall(other_aw.wall_id)
+                            if other_w is not None:
+                                delta_s = self._calc_projected_half_thickness(v1, mag_v1, other_w)
+                                s_min = max(0.0, offset - delta_s)
+                                s_max = min(wall_len, offset + delta_s)
+                                intervals.append((s_min, s_max, other_aw.wall_id))
 
             # 2. Caso o target_wall chegue à junção (ArrivingWall)
             for aw in j.arriving_walls:
-                if aw.wall.wall_id == wall_id:
+                if aw.wall_id == wall_id:
                     # Para todas as outras paredes na junção
-                    other_walls: list[Wall] = []
+                    other_wall_ids: list[str] = []
                     for other_pw in j.passing_walls:
-                        if other_pw.wall.wall_id != wall_id:
-                            other_walls.append(other_pw.wall)
+                        if other_pw.wall_id != wall_id:
+                            other_wall_ids.append(other_pw.wall_id)
                     for other_aw in j.arriving_walls:
-                        if other_aw.wall.wall_id != wall_id:
-                            other_walls.append(other_aw.wall)
+                        if other_aw.wall_id != wall_id:
+                            other_wall_ids.append(other_aw.wall_id)
 
-                    for other_w in other_walls:
-                        delta_s = self._calc_projected_half_thickness(v1, mag_v1, other_w)
-                        if aw.wall_end == WallEnd.START:
-                            s_min = 0.0
-                            s_max = min(wall_len, delta_s)
-                            intervals.append((s_min, s_max, other_w.wall_id))
-                        else:  # WallEnd.END
-                            s_min = max(0.0, wall_len - delta_s)
-                            s_max = wall_len
-                            intervals.append((s_min, s_max, other_w.wall_id))
+                    for other_wid in other_wall_ids:
+                        other_w = self.find_wall(other_wid)
+                        if other_w is not None:
+                            delta_s = self._calc_projected_half_thickness(v1, mag_v1, other_w)
+                            if aw.wall_end == WallEnd.START:
+                                s_min = 0.0
+                                s_max = min(wall_len, delta_s)
+                                intervals.append((s_min, s_max, other_w.wall_id))
+                            else:  # WallEnd.END
+                                s_min = max(0.0, wall_len - delta_s)
+                                s_max = wall_len
+                                intervals.append((s_min, s_max, other_w.wall_id))
 
         return tuple(intervals)
 
@@ -317,7 +321,7 @@ class FloorPlan:
         arriving_ends: set[tuple[str, WallEnd]] = set()
         for j in junctions:
             for aw in j.arriving_walls:
-                arriving_ends.add((aw.wall.wall_id, aw.wall_end))
+                arriving_ends.add((aw.wall_id, aw.wall_end))
 
         for wall in self.walls:
             if wall.start_bond != BondType.NONE:

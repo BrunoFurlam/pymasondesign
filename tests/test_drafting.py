@@ -37,6 +37,13 @@ class TestDrafting(unittest.TestCase):
         self.assertEqual(axis.point_at(5.0), p2)
         self.assertEqual(axis.point_at(2.5), Point2D(2.0, 1.5))
 
+        # projected_offset
+        self.assertAlmostEqual(axis.projected_offset(p1), 0.0)
+        self.assertAlmostEqual(axis.projected_offset(p2), 5.0)
+        self.assertAlmostEqual(axis.projected_offset(Point2D(2.0, 1.5)), 2.5)
+        # Ponto fora do eixo mas projetado no meio (ex.: deslocado perpendicularmente por normal)
+        self.assertAlmostEqual(axis.projected_offset(Point2D(2.0 - 3.0, 1.5 + 4.0)), 2.5)
+
         # reversed
         rev = axis.reversed()
         self.assertEqual(rev.start, p2)
@@ -286,12 +293,36 @@ class TestDrafting(unittest.TestCase):
         self.assertEqual(j_x.total_incident_walls, 3)
         self.assertEqual(len(j_x.passing_walls), 1)
         self.assertIsInstance(j_x.passing_walls[0], PassingWall)
-        self.assertEqual(j_x.passing_walls[0].wall.wall_id, "W_H")
-        self.assertAlmostEqual(j_x.passing_walls[0].offset, 5.0)  # junção no meio da parede de 10m
+        self.assertEqual(j_x.passing_walls[0].wall_id, "W_H")
+        self.assertAlmostEqual(w_h.axis.projected_offset(j_x.point), 5.0)  # junção no meio da parede de 10m
         self.assertEqual(len(j_x.arriving_walls), 2)
         self.assertTrue(j_x.has_indirect_bonds)
 
-        arriving_map = {aw.wall.wall_id: aw for aw in j_x.arriving_walls}
+        # Verificação dos métodos de consulta em Junction
+        self.assertTrue(j_x.has_wall("W_H"))
+        self.assertTrue(j_x.has_wall("W_VT"))
+        self.assertTrue(j_x.has_wall("W_VB"))
+        self.assertFalse(j_x.has_wall("W_UNKNOWN"))
+
+        self.assertTrue(j_x.is_passing("W_H"))
+        self.assertFalse(j_x.is_passing("W_VT"))
+        self.assertFalse(j_x.is_passing("W_UNKNOWN"))
+
+        self.assertTrue(j_x.is_arriving("W_VT"))
+        self.assertTrue(j_x.is_arriving("W_VB"))
+        self.assertFalse(j_x.is_arriving("W_H"))
+
+        part_h = j_x.get_participation("W_H")
+        self.assertIsInstance(part_h, PassingWall)
+        self.assertEqual(part_h.wall_id, "W_H")
+
+        part_vt = j_x.get_participation("W_VT")
+        self.assertIsInstance(part_vt, ArrivingWall)
+        self.assertEqual(part_vt.wall_id, "W_VT")
+
+        self.assertIsNone(j_x.get_participation("W_UNKNOWN"))
+
+        arriving_map = {aw.wall_id: aw for aw in j_x.arriving_walls}
         self.assertEqual(arriving_map["W_VT"].wall_end, WallEnd.START)
         self.assertEqual(arriving_map["W_VT"].bond, BondType.DIRECT)
         self.assertEqual(arriving_map["W_VB"].wall_end, WallEnd.END)
@@ -304,7 +335,6 @@ class TestDrafting(unittest.TestCase):
 
         plan_t3 = FloorPlan(plan_id="PLAN_T3", height=2.80, walls=(w_t1, w_t2, w_t3))
         junctions_t3 = plan_t3.find_junctions()
-
         self.assertEqual(len(junctions_t3), 1)
         j_t3 = junctions_t3[0]
         self.assertEqual(j_t3.point, Point2D(5.0, 5.0))
@@ -321,8 +351,8 @@ class TestDrafting(unittest.TestCase):
         j_t2 = plan_t2_ind.find_junctions()[0]
         self.assertEqual(j_t2.point, Point2D(5.0, 0.0))
         self.assertEqual(len(j_t2.passing_walls), 1)
-        self.assertEqual(j_t2.passing_walls[0].wall.wall_id, "P_PASS")
-        self.assertAlmostEqual(j_t2.passing_walls[0].offset, 5.0)
+        self.assertEqual(j_t2.passing_walls[0].wall_id, "P_PASS")
+        self.assertAlmostEqual(w_pass.axis.projected_offset(j_t2.point), 5.0)
         self.assertEqual(len(j_t2.arriving_walls), 1)
         self.assertEqual(j_t2.arriving_walls[0].bond, BondType.INDIRECT)
         self.assertTrue(j_t2.has_indirect_bonds)

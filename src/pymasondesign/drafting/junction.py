@@ -23,18 +23,10 @@ class PassingWall:
     """Representação de uma parede que atravessa (passa por) um nó de encontro (Junction).
 
     Attributes:
-        wall: Parede que passa pelo nó.
-        offset: Distância ao longo do eixo da parede onde ocorre a junção (em unidade de comprimento).
+        wall_id: Identificador da parede que passa pelo nó.
     """
 
-    wall: Wall = field()
-    offset: float = field(converter=float)
-
-    @classmethod
-    def from_wall_and_parameter(cls, wall: Wall, t: float) -> PassingWall:
-        """Cria PassingWall a partir da parede e do parâmetro normalizado t (0 < t < 1)."""
-        offset = t * wall.axis.length
-        return cls(wall=wall, offset=offset)
+    wall_id: str = field(converter=str)
 
 
 @define(frozen=True, slots=True)
@@ -42,12 +34,12 @@ class ArrivingWall:
     """Representação de uma parede cuja extremidade chega a um nó de encontro (Junction).
 
     Attributes:
-        wall: Parede incidente.
+        wall_id: Identificador da parede incidente.
         wall_end: Extremidade da parede que toca o nó (START ou END).
         bond: Tipo de amarração efetivo nessa extremidade (DIRECT ou INDIRECT).
     """
 
-    wall: Wall = field()
+    wall_id: str = field(converter=str)
     wall_end: WallEnd = field()
     bond: BondType = field()
 
@@ -55,7 +47,7 @@ class ArrivingWall:
     def from_wall(cls, wall: Wall, wall_end: WallEnd) -> ArrivingWall:
         """Cria ArrivingWall extraindo o tipo de amarração configurado na própria parede."""
         bond = wall.start_bond if wall_end == WallEnd.START else wall.end_bond
-        return cls(wall=wall, wall_end=wall_end, bond=bond)
+        return cls(wall_id=wall.wall_id, wall_end=wall_end, bond=bond)
 
 
 @define(frozen=True, slots=True)
@@ -81,3 +73,25 @@ class Junction:
     def has_indirect_bonds(self) -> bool:
         """Indica se alguma parede que chega a este nó possui amarração indireta."""
         return any(aw.bond == BondType.INDIRECT for aw in self.arriving_walls)
+
+    def has_wall(self, wall_id: str) -> bool:
+        """Verifica se uma parede participa desta junção (seja como passante ou incidente)."""
+        return self.is_passing(wall_id) or self.is_arriving(wall_id)
+
+    def is_passing(self, wall_id: str) -> bool:
+        """Verifica se a parede informada atravessa (passa por) esta junção."""
+        return any(pw.wall_id == wall_id for pw in self.passing_walls)
+
+    def is_arriving(self, wall_id: str) -> bool:
+        """Verifica se a parede informada chega (tem extremidade conectada a) esta junção."""
+        return any(aw.wall_id == wall_id for aw in self.arriving_walls)
+
+    def get_participation(self, wall_id: str) -> PassingWall | ArrivingWall | None:
+        """Retorna a instância de participação (PassingWall ou ArrivingWall) da parede nesta junção."""
+        for pw in self.passing_walls:
+            if pw.wall_id == wall_id:
+                return pw
+        for aw in self.arriving_walls:
+            if aw.wall_id == wall_id:
+                return aw
+        return None
