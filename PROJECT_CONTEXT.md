@@ -73,16 +73,16 @@ O projeto implementa e segue estritamente as seguintes normas da ABNT (Associaç
 - [x] Modelos de materiais e tabelas normativas pré-carregadas da NBR 16868 (`pymasondesign.materials`).
 - [x] Lançamento e topologia de pavimentos, plantas, paredes, aberturas e nós de encontro (`pymasondesign.drafting`).
 
-### Fase 2: Conversão de Drafting para Modelo de Dimensionamento Estrutural (Em Planejamento)
-- [ ] **Discretização e Extração de Painéis Resistentes (Piers / Wall Panels)**:
-  - Segmentação automática de paredes contínuas em sub-painéis resistentes delimitados por aberturas (portas/janelas) e extremidades.
-  - Associação de propriedades seccionais geométricas e de materiais para cada painel.
-- [ ] **Modelagem de Lintéis e Contravergas (Lintels / Spandrels / Coupling Beams)**:
-  - Extração de vigas de acoplamento/lintéis sobre vãos e peitoris/contravergas sob janelas.
-  - Definição de rigidez equivalente, geometria e vinculação aos painéis adjacentes.
+### Fase 2: Conversão de Drafting para Modelo de Dimensionamento Estrutural (Em Andamento)
+- [x] **Modelos e Serviços de Painéis de Alvenaria (`pymasondesign.elements`)**:
+  - Implementação de `MasonryPanel` imutável com discretização automática por vãos de abertura e nós de encontro.
+  - Implementação de `PanelGroup` e algoritmo de componentes conexas por amarração direta (`MasonryPanelService.group_panels_by_direct_bond`).
 - [ ] **Determinação de Abas Colaborantes (Flanges)**:
   - Cálculo analítico de larguras efetivas de flange ($b_f$) em nós em L, T e Cruz (conforme ABNT NBR 16868-1 para amarração direta e indireta).
   - Composição de seções em L, T, U e I para análise de flexo-compressão e rigidez global.
+- [ ] **Modelagem de Lintéis e Contravergas (Lintels / Spandrels / Coupling Beams)**:
+  - Extração de vigas de acoplamento/lintéis sobre vãos e peitoris/contravergas sob janelas.
+  - Definição de rigidez equivalente, geometria e vinculação aos painéis adjacentes.
 - [ ] **Grafo Estrutural e Modelo de Análise Global**:
   - Geração de modelo de barras equivalentes / macroelementos de pórtico espacial para distribuição de ações verticais (cargas de piso/telhado) e horizontais (vento/desaprumo).
   - Vinculações entre pavimentos (`Story`) e nós estruturais.

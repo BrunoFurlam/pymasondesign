@@ -17,12 +17,12 @@ graph TD
     end
 
     subgraph "pymasondesign (Core)"
-        subgraph "Lançamento e Topologia (Drafting)"
-            DRAFT[drafting<br/>Story, FloorPlan, Wall, Opening, Junction]
+        subgraph "Elementos Estruturais (Elements)"
+            ELEM[elements<br/>MasonryPanel, PanelGroup, MasonryPanelService]
         end
 
-        subgraph "Modelo Estrutural de Dimensionamento (Structural Model)"
-            STRUCT[structural_model<br/>StructuralModel, MasonryPanel, Lintel, Flange]
+        subgraph "Lançamento e Topologia (Drafting)"
+            DRAFT[drafting<br/>Story, FloorPlan, Wall, Opening, Junction]
         end
 
         subgraph "Mecânica e Análise Seccional (Mechanics)"
@@ -47,9 +47,8 @@ graph TD
     C --> DRAFT
     DRAFT --> GEOM
     DRAFT --> MAT
-    DRAFT --> STRUCT
-    STRUCT --> SECT
-    STRUCT --> MECH
+    ELEM --> DRAFT
+    ELEM --> GEOM
     MECH --> SECT
     MECH --> GEOM
     SECT --> GEOM
@@ -88,7 +87,7 @@ graph TD
 Fornece primitivas vetoriais e matriciais 2D puras:
 - **`Point2D`**: Coordenadas cartesianas $(x, y)$, cálculo de distâncias euclidianas e translações.
 - **`Vector2D`**: Operações vetoriais (soma, subtração, produto escalar, produto vetorial 2D `cross`, rotação $90^\circ$, normalização e projeção).
-- **`Axis`**: Eixo orientado no plano definido por `start` e `end`. Provê vetor diretor unitário, vetor normal, comprimento, ponto intermediário via parâmetro $t \in [0, 1]$ e detecção analítica de interseções (`intersect()`).
+- **`Axis`**: Eixo orientado no plano definido por `start` e `end`. Provê vetor diretor unitário, vetor normal, comprimento, ponto intermediário via parâmetro $t \in [0, 1]$, projeção ortogonal escalar (`projected_offset(point)`) e detecção analítica de interseções (`intersect()`).
 - **`AxisRelation` & `AxisIntersectionResult`**: Classificação de relações entre eixos (`POINT_INTERSECT`, `TOUCHING_VERTEX`, `OVERLAPPING`, `PARALLEL`, `COLINEAR`, `DISJOINT`).
 - **`Transform2D`**: Transformações afins 2D representadas por matrizes homogêneas $3 \times 3$ (translação, rotação em radianos ou graus, escala).
 - **`Polygon`**: Polígono 2D simples ou complexo, cálculo de área com sinal, centróide, inversão de sentido dos vértices e teste de ponto interno via *ray-casting*.
@@ -150,19 +149,18 @@ Especificações de materiais e compósitos de alvenaria:
 Modelagem arquitetural e estrutural de plantas e pavimentos:
 - **`Opening`**: Vão na alvenaria (portas, janelas, passagens) com largura ($w$), altura ($h$), peitoril ($sill$), elevação e posição ao longo do eixo da parede (`offset_along_wall`).
 - **`Wall`**: Parede estrutural imutável definida por seu identificador (`wall_id`), eixo geométrico 2D (`axis`), espessura nominal (`thickness`), altura (`height`), lista imutável de aberturas (`openings`) e tipos de amarração nas extremidades (`start_bond`, `end_bond`).
-- **`PassingWall` & `ArrivingWall`**: Representação de paredes passantes e paredes incidentes em nós de encontro.
-- **`Junction`**: Nó estrutural de encontro de paredes (em L, T, X ou topo a topo), com localização topológica `point`, lista de paredes passantes e paredes incidentes.
-- **`FloorPlan`**: Planta baixa de alvenaria estrutural. Agrupa as paredes, calcula comprimento total, valida sobreposições de aberturas, detecta nós de encontro (`detect_junctions()`) e valida consistência estrutural.
+- **`PassingWall` & `ArrivingWall`**: Representação leve de paredes passantes e incidentes em nós de encontro, identificadas por `wall_id: str`.
+- **`Junction`**: Nó estrutural de encontro de paredes (em L, T, X ou topo a topo), com localização topológica `point`, listas de paredes passantes e incidentes, e métodos de consulta (`has_wall`, `is_passing`, `is_arriving`, `get_participation`).
+- **`FloorPlan`**: Planta baixa de alvenaria estrutural. Agrupa as paredes, calcula comprimento total, valida sobreposições de aberturas, detecta nós de encontro (`find_junctions()`), calcula zonas de exclusão e valida amarrações.
 - **`Story`**: Pavimento estrutural com elevação $z$, altura de pé-direito $H$ e associação com uma `FloorPlan`.
 
 ---
 
-### 3.6. `pymasondesign.structural_model` (Conversão Topológica para Modelo de Dimensionamento)
-Camada de transição entre o lançamento físico (*drafting*) e o modelo analítico/numérico de cálculo:
-- **`MasonryPanel` (Piers / Sub-painéis)**: Segmentos resistentes de parede contínuos delimitados por aberturas ou extremidades, associados a sua seção transversal (simples ou com abas), esbeltez efetiva e material.
-- **`Lintel` (Spandrels / Vergas e Contravergas)**: Vigas de alvenaria armada ou canaleta sobre aberturas (e sob janelas) responsáveis pelo acoplamento de rigidez e transferência de cisalhamento entre painéis adjacentes.
-- **`Flange` (Abas Colaborantes)**: Trechos de paredes transversais integrados aos painéis principais em nós de encontro (amarração direta ou indireta), calculados segundo a ABNT NBR 16868-1.
-- **`StructuralModelConverter`**: Motor de conversão que recebe `FloorPlan` / `Story` e gera a malha/grafo estrutural com painéis, lintéis, abas e nós de acoplamento.
+### 3.6. `pymasondesign.elements` (Modelos e Serviços de Elementos Estruturais)
+Camada de transição entre a topologia física (*drafting*) e o modelo de dimensionamento analítico:
+- **`MasonryPanel` (Piers / Painéis Resistentes)**: Segmentos resistentes de parede contínuos delimitados por extremidades de parede, vãos de abertura ou nós de encontro (`panel_id`, `wall_id`, `axis`, `thickness`, `height`, `length`).
+- **`PanelGroup` (Grupos Conexos de Painéis)**: Subconjunto de painéis conectados solidariamente por amarração direta (`BondType.DIRECT`) ou continuidade de parede passante (`group_id`, `panels`, `total_length`, `wall_ids`, `find_panel`).
+- **`MasonryPanelService`**: Serviço de domínio responsável pela discretização analítica de paredes em painéis (`derive_panels_from_wall`) e extração de componentes conexas de painéis amarrados diretamente (`group_panels_by_direct_bond`).
 
 ---
 
@@ -172,19 +170,19 @@ Camada de transição entre o lançamento físico (*drafting*) e o modelo analí
 sequenceDiagram
     participant User as Engenheiro / Plugin BIM
     participant Drafting as Drafting (FloorPlan / Wall)
-    participant Model as Structural Model (Converter / Panels / Lintels)
+    participant Elements as Elements (MasonryPanelService)
     participant Sect as Sections (SectionProperties)
     participant Mech as Mechanics & Design (MechanicsService)
 
     User->>Drafting: Cria paredes e aberturas na FloorPlan
     Drafting-->>Drafting: Valida topologia e detecta Junctions
-    Drafting->>Model: Converte FloorPlan em StructuralModel
-    Model->>Model: Discretiza Wall em MasonryPanels + Lintels + Flanges
-    Model->>Sect: Gera seções transversais (compostas com abas)
-    Sect-->>Model: Propriedades seccionais (A, CG, Ixx, Iyy, W)
-    User->>Mech: Aplica carregamentos / ações no modelo
+    Drafting->>Elements: Discretiza paredes em MasonryPanels e PanelGroups
+    Elements-->>Elements: Agrupa painéis por amarração direta
+    Elements->>Sect: Gera seções transversais (simples e compostas)
+    Sect-->>Elements: Propriedades seccionais (A, CG, Ixx, Iyy, W)
+    User->>Mech: Aplica carregamentos / ações nos elementos
     Mech->>Mech: Calcula planos de tensão, flexo-compressão e esbeltez
-    Mech-->>User: Verificações ELU/ELS (tensões, armaduras, cisalhamento)
+    Mech-->>User: Verificações normativas ELU/ELS
 ```
 
 ---
