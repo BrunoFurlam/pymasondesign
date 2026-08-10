@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 
 
-@define(frozen=True, slots=True)
+@frozen
 class MortarSpecification:
     """Especificação de argamassa de assentamento (NBR 16868).
 

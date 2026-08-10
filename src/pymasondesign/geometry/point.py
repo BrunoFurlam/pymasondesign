@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import math
-from attrs import define, field
+from attrs import field, frozen
 
 
-@define(frozen=True, slots=True)
+@frozen
 class Point2D:
     """Representa um ponto 2D no plano cartesiano (x, y)."""
 

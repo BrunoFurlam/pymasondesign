@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.common import to_tuple
 from pymasondesign.structure.floor_plan_model import FloorPlanModel
 from pymasondesign.structure.story_model import StoryModel
 
 
-@define(frozen=True, slots=True)
+@frozen
 class BuildingModel:
     """Modelo estrutural da edificação completa contendo o catálogo de plantas e pavimentos ordenados de cima para baixo.
 

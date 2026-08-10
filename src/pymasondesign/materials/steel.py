@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.materials.enums import SteelCategory
 
 
-@define(frozen=True, slots=True)
+@frozen
 class SteelSpecification:
     """Especificação mecânica de aço para armaduras passivas (NBR 6118 / NBR 7480 / NBR 16868).
 

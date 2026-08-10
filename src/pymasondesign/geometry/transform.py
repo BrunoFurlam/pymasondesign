@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import math
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.vector import Vector2D
 from pymasondesign.geometry.tolerances import GEOMETRIC_TOLERANCE
 
 
-@define(frozen=True, slots=True)
+@frozen
 class Transform2D:
     """Representa uma transformação geométrica 2D geral baseada em vetores diretores de eixos e origem.
 

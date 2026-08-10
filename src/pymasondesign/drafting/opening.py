@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.drafting.enums import OpeningType
 
 
-@define(frozen=True, slots=True)
+@frozen
 class Opening:
     """Especificação de abertura / vão em parede de alvenaria.
 

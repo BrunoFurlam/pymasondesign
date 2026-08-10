@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from typing import Iterable
-from attrs import define, field
+from attrs import field, frozen
 
 
-@define(frozen=True, slots=True)
+@frozen
 class SectionForces:
     """Representa o conjunto de esforços solicitantes atuantes em uma seção transversal.
 

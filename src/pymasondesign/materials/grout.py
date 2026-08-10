@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 
 
-@define(frozen=True, slots=True)
+@frozen
 class GroutSpecification:
     """Especificação de graute para preenchimento de alvenaria estrutural (NBR 16868).
 

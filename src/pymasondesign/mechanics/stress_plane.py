@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import math
 from typing import Iterable
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.transform import Transform2D
 
 
-@define(frozen=True, slots=True)
+@frozen
 class NormalStressPlane:
     """Representa o plano linear de tensões normais em uma seção transversal.
 

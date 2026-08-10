@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.materials.masonry import MasonrySpecification
 
 
-@define(frozen=True, slots=True)
+@frozen
 class Story:
     """Representação de um pavimento/nível físico do edifício de alvenaria estrutural no lançamento.
 

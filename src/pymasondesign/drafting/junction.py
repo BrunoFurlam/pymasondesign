@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.common import to_tuple
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.drafting.enums import BondType, WallEnd
 from pymasondesign.drafting.wall import Wall
 
 
-@define(frozen=True, slots=True)
+@frozen
 class PassingWall:
     """Representação de uma parede que atravessa (passa por) um nó de encontro (Junction).
 
@@ -18,7 +18,7 @@ class PassingWall:
     wall_id: str = field(converter=str)
 
 
-@define(frozen=True, slots=True)
+@frozen
 class ArrivingWall:
     """Representação de uma parede cuja extremidade chega a um nó de encontro (Junction).
 
@@ -39,7 +39,7 @@ class ArrivingWall:
         return cls(wall_id=wall.wall_id, wall_end=wall_end, bond=bond)
 
 
-@define(frozen=True, slots=True)
+@frozen
 class Junction:
     """Nó de encontro geométrico calculado entre paredes em uma planta baixa (FloorPlan).
 

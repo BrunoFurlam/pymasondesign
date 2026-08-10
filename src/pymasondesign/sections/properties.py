@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import math
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.bounds import BoundingBox
 
 
-@define(frozen=True, slots=True)
+@frozen
 class SectionProperties:
     """Propriedades geométricas e de resistência de uma seção transversal 2D.
 

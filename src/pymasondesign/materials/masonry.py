@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.materials.enums import BlockMaterialType, CeramicWallType
 from pymasondesign.materials.block import BlockSpecification
 from pymasondesign.materials.mortar import MortarSpecification
 from pymasondesign.materials.grout import GroutSpecification
 
 
-@define(frozen=True, slots=True)
+@frozen
 class MasonrySpecification:
     """Especificação mecânica do compósito de alvenaria estrutural (NBR 16868).
 

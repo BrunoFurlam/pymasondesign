@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.materials.masonry import MasonrySpecification
 
 
-@define(frozen=True, slots=True)
+@frozen
 class StoryModel:
     """Modelo estrutural de um pavimento na edificação, associando cota vertical, material e referência ao modelo de planta.
 

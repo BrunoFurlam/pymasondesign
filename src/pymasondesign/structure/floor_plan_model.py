@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.common import to_tuple
 from pymasondesign.structure.group import PanelGroup
 from pymasondesign.structure.panel import MasonryPanel
 
 
-@define(frozen=True, slots=True)
+@frozen
 class FloorPlanModel:
     """Modelo estrutural derivado de uma planta baixa (FloorPlan), contendo seus grupos de painéis discretizados.
 

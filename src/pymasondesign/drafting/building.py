@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.common import to_tuple
 from pymasondesign.drafting.floor_plan import FloorPlan
 from pymasondesign.drafting.story import Story
 
 
-@define(frozen=True, slots=True)
+@frozen
 class Building:
     """Representação do edifício completo no lançamento físico (drafting).
 

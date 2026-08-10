@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.common import to_tuple
 from pymasondesign.structure.panel import MasonryPanel
 
 
-@define(frozen=True, slots=True)
+@frozen
 class PanelGroup:
     """Grupo estrutural de painéis de alvenaria conectados monoliticamente por amarração direta.
 

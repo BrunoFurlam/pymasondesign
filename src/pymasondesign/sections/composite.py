@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from attrs import define, field, Factory
+from attrs import Factory, define, field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.bounds import BoundingBox
 from pymasondesign.sections.base import Section
 from pymasondesign.sections.properties import SectionProperties
 
 
-@define(frozen=True, slots=True)
+@frozen
 class SectionComponent:
     """Componente individual de uma seção composta.
 

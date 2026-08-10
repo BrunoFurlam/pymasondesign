@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from enum import Enum
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.vector import Vector2D
 from pymasondesign.geometry.bounds import BoundingBox
@@ -25,7 +25,7 @@ class AxisRelation(Enum):
     OVERLAPPING = "OVERLAPPING"          # Colineares com sobreposição de segmento
 
 
-@define(frozen=True, slots=True)
+@frozen
 class AxisIntersectionResult:
     """Resultado da análise geométrica de interseção entre dois eixos 2D.
 
@@ -44,7 +44,7 @@ class AxisIntersectionResult:
     u: float | None = field(default=None)
 
 
-@define(frozen=True, slots=True)
+@frozen
 class Axis:
     """Value Object representando um eixo linear orientado 2D.
 

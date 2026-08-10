@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.materials.enums import BlockMaterialType, StrengthClass, CeramicWallType
 from pymasondesign.materials.block import BlockSpecification
 from pymasondesign.materials.mortar import MortarSpecification
@@ -8,7 +8,7 @@ from pymasondesign.materials.grout import GroutSpecification
 from pymasondesign.materials.masonry import MasonrySpecification
 
 
-@define(frozen=True, slots=True)
+@frozen
 class NBR16868TableEntry:
     """Representa uma linha da tabela normativa de alvenaria estrutural da NBR 16868.
 

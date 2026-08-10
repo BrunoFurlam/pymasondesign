@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.polygon import Polygon
 from pymasondesign.sections.base import Section
 from pymasondesign.sections.properties import SectionProperties
 
 
-@define(frozen=True, slots=True)
+@frozen
 class PolygonSection(Section):
     """Representa uma seção transversal estrutural poligonal.
 

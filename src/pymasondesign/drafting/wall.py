@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.common import to_tuple
 from pymasondesign.geometry.axis import Axis
 from pymasondesign.geometry.tolerances import OVERLAP_TOLERANCE
@@ -16,7 +16,7 @@ def _convert_bond(val: BondType | str | None) -> BondType:
     return BondType(str(val))
 
 
-@define(frozen=True, slots=True)
+@frozen
 class Wall:
     """Representação de uma parede estrutural de alvenaria em planta.
 

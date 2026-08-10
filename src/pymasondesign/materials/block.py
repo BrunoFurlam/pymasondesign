@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.materials.enums import BlockMaterialType, StrengthClass, CeramicWallType
 
 
-@define(frozen=True, slots=True)
+@frozen
 class BlockSpecification:
     """Especificação de bloco estrutural (NBR 16868).
 

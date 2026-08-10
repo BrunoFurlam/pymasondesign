@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.bounds import BoundingBox
 from pymasondesign.geometry.transform import Transform2D
 from pymasondesign.geometry.tolerances import DIVISION_GUARD
 
 
-@define(frozen=True, slots=True)
+@frozen
 class Polygon:
     """Representa uma forma geométrica poligonal 2D pura e imutável delimitada por vértices.
 

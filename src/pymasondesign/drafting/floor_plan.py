@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.vector import Vector2D
 from pymasondesign.geometry.tolerances import (
@@ -19,7 +19,7 @@ from pymasondesign.drafting.opening import Opening
 from pymasondesign.drafting.junction import Junction, ArrivingWall, PassingWall
 
 
-@define(frozen=True, slots=True)
+@frozen
 class FloorPlan:
     """Planta baixa de alvenaria estrutural 2D compartilhável entre pavimentos.
 

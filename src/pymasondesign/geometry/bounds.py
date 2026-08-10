@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 
 
-@define(frozen=True, slots=True)
+@frozen
 class BoundingBox:
     """Representa uma caixa delimitadora 2D alinhada aos eixos (x_min, x_max, y_min, y_max)."""
 

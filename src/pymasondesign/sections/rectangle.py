@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.bounds import BoundingBox
 from pymasondesign.sections.base import Section
 from pymasondesign.sections.properties import SectionProperties
 
 
-@define(frozen=True, slots=True)
+@frozen
 class RectangularSection(Section):
     """Representa uma seção transversal retangular maciça.
 

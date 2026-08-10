@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.geometry.axis import Axis
 
 
-@define(frozen=True, slots=True)
+@frozen
 class MasonryPanel:
     """Representação de um painel resistente de alvenaria estrutural (pier / sub-parede).
 

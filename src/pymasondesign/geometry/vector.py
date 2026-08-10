@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import math
-from attrs import define, field
+from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 
 
-@define(frozen=True, slots=True)
+@frozen
 class Vector2D:
     """Representa um vetor euclidiano 2D (x, y).
 
