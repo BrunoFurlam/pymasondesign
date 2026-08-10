@@ -17,6 +17,10 @@ graph TD
     end
 
     subgraph "pymasondesign (Core)"
+        subgraph "Dimensionamento e Seções Resistentes (Design)"
+            DESIGN[design<br/>ResistantSection, ResistantSegment, FlangeOptions, ResistantSectionService]
+        end
+
         subgraph "Modelo Estrutural Analítico (Structure)"
             STRUCT[structure<br/>BuildingModel, StoryModel, FloorPlanModel, MasonryPanel, PanelGroup]
         end
@@ -47,8 +51,11 @@ graph TD
     C --> DRAFT
     DRAFT --> GEOM
     DRAFT --> MAT
-    ELEM --> DRAFT
-    ELEM --> GEOM
+    STRUCT --> DRAFT
+    STRUCT --> GEOM
+    DESIGN --> STRUCT
+    DESIGN --> SECT
+    DESIGN --> GEOM
     MECH --> SECT
     MECH --> GEOM
     SECT --> GEOM
@@ -85,9 +92,9 @@ graph TD
 
 ### 3.1. `pymasondesign.geometry` (Geometria 2D e Tolerâncias)
 Fornece primitivas vetoriais e matriciais 2D puras:
-- **`Point2D`**: Coordenadas cartesianas $(x, y)$, cálculo de distâncias euclidianas e translações.
+- **`Point2D`**: Coordenadas cartesianas $(x, y)$, cálculo de distâncias euclidianas, equivalência com tolerância (`is_same(other, tolerance)`) e translações.
 - **`Vector2D`**: Operações vetoriais (soma, subtração, produto escalar, produto vetorial 2D `cross`, rotação $90^\circ$, normalização e projeção).
-- **`Axis`**: Eixo orientado no plano definido por `start` e `end`. Provê vetor diretor unitário, vetor normal, comprimento, ponto intermediário via parâmetro $t \in [0, 1]$, projeção ortogonal escalar (`projected_offset(point)`) e detecção analítica de interseções (`intersect()`).
+- **`Axis`**: Eixo orientado no plano definido por `start` e `end`. Provê vetor diretor unitário, vetor normal, comprimento, ponto intermediário via parâmetro $t \in [0, 1]$, projeção ortogonal escalar (`projected_offset(point)`), menor distância a ponto (`distance_to_point(point)`) e detecção analítica de interseções (`intersect()`).
 - **`AxisRelation` & `AxisIntersectionResult`**: Classificação de relações entre eixos (`POINT_INTERSECT`, `TOUCHING_VERTEX`, `OVERLAPPING`, `PARALLEL`, `COLINEAR`, `DISJOINT`).
 - **`Transform2D`**: Transformações afins 2D representadas por matrizes homogêneas $3 \times 3$ (translação, rotação em radianos ou graus, escala).
 - **`Polygon`**: Polígono 2D simples ou complexo, cálculo de área com sinal, centróide, inversão de sentido dos vértices e teste de ponto interno via *ray-casting*.
@@ -168,7 +175,19 @@ Camada de transição entre a topologia física (*drafting*) e o modelo de dimen
 
 ---
 
-### 3.7. `pymasondesign.common` (Utilitários e Helpers Compartilhados)
+### 3.7. `pymasondesign.design` (Dimensionamento e Seções Resistentes)
+Modelagem das seções transversais resistentes estruturais com almas e abas colaborantes:
+- **`SegmentRole`**: Classificação funcional do segmento na seção (`WEB` para alma principal e `FLANGE` para aba colaborante transversal).
+- **`FlangeOptions`**: Configuração das regras de largura colaborante de aba ($b_f$), incluindo multiplicador sobre a espessura da alma ($k \cdot t_{web}$, padrão 6.0 da NBR 16868-1) e largura customizada fixa.
+- **`ResistantSegment`**: Segmento de alma ou aba componente da seção contendo identificação, papel funcional, eixos e polígonos retangulares exatos tanto no sistema local quanto global, espessura e comprimento efetivo.
+- **`ResistantSection`**: Seção resistente calculada contendo coleção imutável de segmentos (`segments`), vetor de direção de análise (`direction`), geometria seccional (`CompositeSection`) e propriedades geométricas (`SectionProperties`) estritamente em **coordenadas locais**, e transformação (`local_to_global: Transform2D`) mapeando para o plano global.
+- **`ResistantSectionService`**: Serviço de domínio para derivação de seções resistentes:
+  - `derive_for_group(group, direction, options)`: Identifica almas, agrupa almas acopladas por painel transversal somente quando $L_{transversal} < k\cdot t_1 + k\cdot t_2$ (desacoplando em seções distintas caso contrário), calcula projeção de abas para fora das faces externas da alma (precedência da alma), particiona vãos entre almas paralelas ($s/2$), monta o sistema local de coordenadas e calcula as propriedades seccionais.
+  - `derive_for_floor_plan(floor_plan_model, direction, options)`: Deriva todas as seções resistentes de todos os grupos de um pavimento para a direção analisada.
+
+---
+
+### 3.8. `pymasondesign.common` (Utilitários e Helpers Compartilhados)
 Utilitários transversais e conversores genéricos:
 - **`to_tuple`**: Conversor genérico tipado (`Iterable[T] | None -> tuple[T, ...]`), garantindo imutabilidade e simplificação de atributos `attrs` em todas as camadas da biblioteca.
 

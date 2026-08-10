@@ -79,9 +79,9 @@ O projeto implementa e segue estritamente as seguintes normas da ABNT (Associaç
   - Implementação de `PanelGroup` e `FloorPlanModel` para representação estrutural da planta/pavimento tipo.
   - Implementação de `StoryModel` e `BuildingModel` para representação global da edificação com ordenação top-to-bottom (de cima para baixo).
   - Algoritmos de componentes conexas e serviços de derivação (`MasonryPanelService.group_panels_by_direct_bond`, `derive_floor_plan_model` e `derive_building_model`).
-- [ ] **Determinação de Abas Colaborantes (Flanges)**:
-  - Cálculo analítico de larguras efetivas de flange ($b_f$) em nós em L, T e Cruz (conforme ABNT NBR 16868-1 para amarração direta e indireta).
-  - Composição de seções em L, T, U e I para análise de flexo-compressão e rigidez global.
+- [x] **Determinação de Abas Colaborantes e Seções Resistentes (`pymasondesign.design`)**:
+  - Cálculo analítico de larguras efetivas de flange ($b_f$) em nós em L, T e Cruz (conforme ABNT NBR 16868-1 para amarração direta com precedência de alma).
+  - Implementação de `ResistantSection`, `ResistantSegment`, `FlangeOptions` e `ResistantSectionService` multidirecional com inércias em coordenadas locais.
 - [ ] **Modelagem de Lintéis e Contravergas (Lintels / Spandrels / Coupling Beams)**:
   - Extração de vigas de acoplamento/lintéis sobre vãos e peitoris/contravergas sob janelas.
   - Definição de rigidez equivalente, geometria e vinculação aos painéis adjacentes.

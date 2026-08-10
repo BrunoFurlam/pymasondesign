@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from attrs import field, frozen
 from pymasondesign.geometry.axis import Axis
+from pymasondesign.geometry.tolerances import JUNCTION_TOLERANCE
 
 
 @frozen
@@ -32,3 +33,7 @@ class MasonryPanel:
     def length(self) -> float:
         """Comprimento linear do painel."""
         return self.axis.length
+
+    def touches(self, other: MasonryPanel, tolerance: float = JUNCTION_TOLERANCE) -> bool:
+        """Verifica se este painel toca o outro painel em alguma extremidade."""
+        return self.axis.touches_endpoints(other.axis, tolerance=tolerance)

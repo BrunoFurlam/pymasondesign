@@ -9,6 +9,7 @@ from pymasondesign.geometry.bounds import BoundingBox
 from pymasondesign.geometry.transform import Transform2D
 from pymasondesign.geometry.tolerances import (
     GEOMETRIC_TOLERANCE,
+    JUNCTION_TOLERANCE,
     is_zero,
     is_close,
     is_within_unit,
@@ -116,6 +117,39 @@ class Axis:
         """
         v = Vector2D(point.x - self.start.x, point.y - self.start.y)
         return v.dot(self.direction)
+
+    def distance_to_point(self, point: Point2D) -> float:
+        """Calcula a menor distância Euclidiana entre um ponto 2D e o segmento linear do eixo.
+
+        Args:
+            point: Ponto 2D no plano XY.
+
+        Returns:
+            Menor distância até o segmento de reta (perpendicular ou até as extremidades start/end).
+        """
+        v = Vector2D(self.dx, self.dy)
+        w = Vector2D(point.x - self.start.x, point.y - self.start.y)
+
+        c1 = w.dot(v)
+        if c1 <= 0.0:
+            return point.distance_to(self.start)
+
+        c2 = v.dot(v)
+        if c2 <= c1:
+            return point.distance_to(self.end)
+
+        b = c1 / c2
+        pb = Point2D(self.start.x + b * v.x, self.start.y + b * v.y)
+        return point.distance_to(pb)
+
+    def touches_endpoints(self, other: Axis, tolerance: float = JUNCTION_TOLERANCE) -> bool:
+        """Verifica se alguma das extremidades (start ou end) deste eixo toca uma extremidade do outro eixo."""
+        return (
+            self.start.is_same(other.start, tolerance)
+            or self.start.is_same(other.end, tolerance)
+            or self.end.is_same(other.start, tolerance)
+            or self.end.is_same(other.end, tolerance)
+        )
 
     def reversed(self) -> Axis:
         """Retorna o eixo com a orientação invertida (start e end trocados)."""

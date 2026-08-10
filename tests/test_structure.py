@@ -44,6 +44,12 @@ class TestStructure(unittest.TestCase):
         self.assertAlmostEqual(panel.height, 2.80)
         self.assertAlmostEqual(panel.length, 5.0)
 
+        # touches
+        other_touching = MasonryPanel("P2_P1", "P2", Axis(Point2D(4.0, 3.0), Point2D(4.0, 6.0)), 0.14, 2.80)
+        other_disjoint = MasonryPanel("P3_P1", "P3", Axis(Point2D(10.0, 0.0), Point2D(15.0, 0.0)), 0.14, 2.80)
+        self.assertTrue(panel.touches(other_touching))
+        self.assertFalse(panel.touches(other_disjoint))
+
         # Validações de espessura e altura positivas
         with self.assertRaises(ValueError):
             MasonryPanel(panel_id="P1_P1", wall_id="P1", axis=axis, thickness=0.0, height=2.80)

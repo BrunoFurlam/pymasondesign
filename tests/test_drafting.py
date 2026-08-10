@@ -19,6 +19,17 @@ from pymasondesign.drafting import (
 
 
 class TestDrafting(unittest.TestCase):
+    def test_point2d_methods(self):
+        p1 = Point2D(10.0, 20.0)
+        p2 = Point2D(10.0, 20.0)
+        p3 = Point2D(10.000001, 20.000001)
+        p4 = Point2D(15.0, 30.0)
+
+        self.assertTrue(p1.is_same(p2))
+        self.assertTrue(p1.is_same(p3, tolerance=1e-4))
+        self.assertFalse(p1.is_same(p3, tolerance=1e-9))
+        self.assertFalse(p1.is_same(p4))
+
     def test_axis_properties_and_transformations(self):
         p1 = Point2D(0.0, 0.0)
         p2 = Point2D(4.0, 3.0)
@@ -44,6 +55,17 @@ class TestDrafting(unittest.TestCase):
         self.assertAlmostEqual(axis.projected_offset(Point2D(2.0, 1.5)), 2.5)
         # Ponto fora do eixo mas projetado no meio (ex.: deslocado perpendicularmente por normal)
         self.assertAlmostEqual(axis.projected_offset(Point2D(2.0 - 3.0, 1.5 + 4.0)), 2.5)
+
+        # distance_to_point
+        self.assertAlmostEqual(axis.distance_to_point(p1), 0.0)
+        self.assertAlmostEqual(axis.distance_to_point(p2), 0.0)
+        self.assertAlmostEqual(axis.distance_to_point(Point2D(2.0, 1.5)), 0.0)
+        # Ponto perpendicular a 5.0 unidades do meio (2.0, 1.5) com normal n = (-0.6, 0.8)
+        self.assertAlmostEqual(axis.distance_to_point(Point2D(2.0 - 3.0, 1.5 + 4.0)), 5.0)
+        # Ponto antes de start (-3.0, -4.0) a 5.0 unidades de p1(0, 0)
+        self.assertAlmostEqual(axis.distance_to_point(Point2D(-3.0, -4.0)), 5.0)
+        # Ponto além de end (7.0, 7.0) a 5.0 unidades de p2(4, 3)
+        self.assertAlmostEqual(axis.distance_to_point(Point2D(7.0, 7.0)), 5.0)
 
         # reversed
         rev = axis.reversed()
