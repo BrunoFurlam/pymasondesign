@@ -10,6 +10,12 @@ from pymasondesign.design.grouting import (
     SegmentGroutDemand,
     SectionGroutDemand,
 )
+from pymasondesign.design.compression import (
+    CompressionDesignOptions,
+    CompressionDesignResult,
+    CompressionVerificationResult,
+    CompressionDesignService,
+)
 
 __all__ = [
     "SegmentRole",
@@ -20,4 +26,8 @@ __all__ = [
     "GroutInterval",
     "SegmentGroutDemand",
     "SectionGroutDemand",
+    "CompressionDesignOptions",
+    "CompressionDesignResult",
+    "CompressionVerificationResult",
+    "CompressionDesignService",
 ]

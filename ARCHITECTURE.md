@@ -179,13 +179,18 @@ Camada de transição entre a topologia física (*drafting*) e o modelo de dimen
 Modelagem das seções transversais resistentes estruturais com almas e abas colaborantes:
 - **`SegmentRole`**: Classificação funcional do segmento na seção (`WEB` para alma principal e `FLANGE` para aba colaborante transversal).
 - **`FlangeOptions`**: Configuração das regras de largura colaborante de aba ($b_f$), incluindo multiplicador sobre a espessura da alma ($k \cdot t_{web}$, padrão 6.0 da NBR 16868-1) e largura customizada fixa.
-- **`ResistantSegment`**: Segmento de alma ou aba componente da seção contendo identificação, papel funcional, eixos e polígonos retangulares exatos tanto no sistema local quanto global, espessura, comprimento efetivo e altura livre (`height`).
+- **`ResistantSection`**: Seção resistente calculada contendo coleção imutável de segmentos (`segments`), altura livre (`height`), vetor de direção de análise (`direction`), geometria seccional (`CompositeSection`) e propriedades geométricas (`SectionProperties`) estritamente em **coordenadas locais**, e transformação (`local_to_global: Transform2D`) mapeando para o plano global.
 - **`GroutInterval`**: Trecho contínuo ao longo do segmento resistente com porcentagem/fração de graute demandada ($0.0 \le \text{ratio} \le 1.0$).
 - **`SegmentGroutDemand`**: Perfil consolidado e contíguo de demanda de grauteamento ao longo de um `ResistantSegment`, com cálculo de média ponderada, consultas pontuais por cota (`ratio_at(offset)`) e identificação de estado (`is_fully_grouted`, `is_ungrouted`).
 - **`SectionGroutDemand`**: Demanda consolidada de grauteamento para todos os segmentos de uma `ResistantSection` (almas e abas), servindo de resultado do dimensionamento para posterior discretização modular.
+- **`CompressionDesignOptions`**: Configuração do dimensionamento à flexo-compressão (NBR 16868-1), incluindo $\gamma_m$ (padrão 2.00), $K$ (fator de correção na flexão, padrão 1.50), $\lambda_{max} = 24.0$ e `max_interval_length` para subdivisão de trechos.
+- **`CompressionDesignResult` & `CompressionVerificationResult`**: Modelos de resultado encapsulando esbeltez ($\lambda$), fator redutor ($R = 1 - (\lambda/40)^3$), perfil de grauteamento demandado, tensões equivalentes máximas ($\sigma_{eq} = \frac{N_d}{A\cdot R} + \frac{M_d}{W\cdot K}$), taxa de utilização e status de conformidade normativa.
 - **`ResistantSectionService`**: Serviço de domínio para derivação de seções resistentes:
   - `derive_for_group(group, direction, options)`: Identifica almas, agrupa almas acopladas por painel transversal somente quando $L_{transversal} < k\cdot t_1 + k\cdot t_2$ (desacoplando em seções distintas caso contrário), calcula projeção de abas para fora das faces externas da alma (precedência da alma), particiona vãos entre almas paralelas ($s/2$), monta o sistema local de coordenadas e calcula as propriedades seccionais.
   - `derive_for_floor_plan(floor_plan_model, direction, options)`: Deriva todas as seções resistentes de todos os grupos de um pavimento para a direção analisada.
+- **`CompressionDesignService`**: Serviço de domínio para dimensionamento e verificação à flexo-compressão:
+  - `design_grouting_demand(section, forces, masonry_spec, options)`: Identifica o plano linear de tensões equivalentes, divide os segmentos em regiões comprimidas e tracionadas, particiona trechos pelo comprimento máximo e calcula a taxa exata de grauteamento pelo pico de compressão do trecho.
+  - `verify_section(section, forces, masonry_spec, grout_demand, options)`: Verifica a conformidade de esbeltez ($\lambda \le 24$) e de tensões admissíveis para uma seção com perfil de grauteamento pré-estabelecido.
 
 ---
 
