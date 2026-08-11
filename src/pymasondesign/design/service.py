@@ -145,7 +145,7 @@ class ResistantSectionService:
 
         for s_idx, cluster_webs in enumerate(web_clusters, start=1):
             section_id = f"RS_{group.group_id}_{dir_label}_{s_idx:02d}"
-            segments_data: list[tuple[str, str, SegmentRole, Axis, float, float, Polygon]] = []
+            segments_data: list[tuple[str, str, SegmentRole, Axis, float, float, float, Polygon]] = []
 
             # 3.1. Criação dos segmentos de ALMA (precedência total, retângulos integrais)
             for w in cluster_webs:
@@ -153,10 +153,11 @@ class ResistantSectionService:
                 w_axis = w.axis
                 w_thick = w.thickness
                 w_len = w.length
+                w_height = w.height
                 w_poly = create_rectangle_polygon(w_axis, w_thick)
 
                 segments_data.append(
-                    (seg_id, w.panel_id, SegmentRole.WEB, w_axis, w_thick, w_len, w_poly)
+                    (seg_id, w.panel_id, SegmentRole.WEB, w_axis, w_thick, w_len, w_height, w_poly)
                 )
 
             # 3.2. Identificação e cálculo de ABAS COLABORANTES (FLANGES)
@@ -244,7 +245,7 @@ class ResistantSectionService:
                     f_seg_id = f"{section_id}_FLANGE_{t_p.panel_id}_{flange_seg_count:02d}"
 
                     segments_data.append(
-                        (f_seg_id, t_p.panel_id, SegmentRole.FLANGE, f_axis, t_thick, bf, f_poly)
+                        (f_seg_id, t_p.panel_id, SegmentRole.FLANGE, f_axis, t_thick, bf, t_p.height, f_poly)
                     )
 
             # 4. Construção do sistema local de coordenadas e da CompositeSection
@@ -254,12 +255,12 @@ class ResistantSectionService:
             v_local = u_local.perpendicular()
 
             # Cálculo do centróide global combinado
-            total_a = sum(poly.area for _, _, _, _, _, _, poly in segments_data)
+            total_a = sum(poly.area for _, _, _, _, _, _, _, poly in segments_data)
             if total_a <= 0:
                 continue
 
-            qx_global = sum(poly.area * poly.centroid.y for _, _, _, _, _, _, poly in segments_data)
-            qy_global = sum(poly.area * poly.centroid.x for _, _, _, _, _, _, poly in segments_data)
+            qx_global = sum(poly.area * poly.centroid.y for _, _, _, _, _, _, _, poly in segments_data)
+            qy_global = sum(poly.area * poly.centroid.x for _, _, _, _, _, _, _, poly in segments_data)
             cg_global = Point2D(qy_global / total_a, qx_global / total_a)
 
             # Transformações Local <-> Global
@@ -270,7 +271,7 @@ class ResistantSectionService:
             final_segments: list[ResistantSegment] = []
             comp_section = CompositeSection()
 
-            for seg_id, src_id, role, g_axis, thick, eff_len, g_poly in segments_data:
+            for seg_id, src_id, role, g_axis, thick, eff_len, seg_h, g_poly in segments_data:
                 l_axis = g_axis.transformed(global_to_local)
                 l_poly = g_poly.transformed(global_to_local)
 
@@ -283,6 +284,7 @@ class ResistantSectionService:
                         global_axis=g_axis,
                         thickness=thick,
                         effective_length=eff_len,
+                        height=seg_h,
                         local_polygon=l_poly,
                         global_polygon=g_poly,
                     )
@@ -293,12 +295,15 @@ class ResistantSectionService:
             # Propriedades da seção em coordenadas locais
             props = comp_section.compute_properties()
 
+            section_height = cluster_webs[0].height
+
             sections.append(
                 ResistantSection(
                     section_id=section_id,
                     group_id=group.group_id,
                     direction=u_dir,
                     segments=tuple(final_segments),
+                    height=section_height,
                     properties=props,
                     geometric_section=comp_section,
                     local_to_global=local_to_global,

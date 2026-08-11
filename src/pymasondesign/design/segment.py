@@ -19,6 +19,7 @@ class ResistantSegment:
         global_axis: Eixo geométrico 2D do segmento expresso no sistema de coordenadas global da planta.
         thickness: Espessura da parede do segmento (t > 0).
         effective_length: Comprimento linear efetivo do segmento (L_web para alma, b_f para aba).
+        height: Altura livre do segmento no pavimento (H > 0).
         local_polygon: Polígono 2D fechado do segmento no sistema de coordenadas local.
         global_polygon: Polígono 2D fechado do segmento no sistema de coordenadas global.
     """
@@ -30,6 +31,7 @@ class ResistantSegment:
     global_axis: Axis = field()
     thickness: float = field(converter=float)
     effective_length: float = field(converter=float)
+    height: float = field(converter=float)
     local_polygon: Polygon = field()
     global_polygon: Polygon = field()
 
@@ -38,6 +40,8 @@ class ResistantSegment:
             raise ValueError(f"Espessura do segmento deve ser positiva, obtido: {self.thickness}.")
         if self.effective_length <= 0:
             raise ValueError(f"Comprimento efetivo do segmento deve ser positivo, obtido: {self.effective_length}.")
+        if self.height <= 0:
+            raise ValueError(f"Altura do segmento deve ser positiva, obtido: {self.height}.")
 
     @property
     def is_web(self) -> bool:

@@ -33,6 +33,8 @@ class TestResistantSection(unittest.TestCase):
 
         sec = sections[0]
         self.assertEqual(sec.group_id, "PG1")
+        self.assertEqual(sec.height, 280.0)
+        self.assertEqual(sec.webs[0].height, 280.0)
         self.assertEqual(sec.num_webs, 1)
         self.assertEqual(sec.num_flanges, 0)
         self.assertEqual(sec.web_panel_ids, ("P1_P1",))
@@ -255,6 +257,7 @@ class TestResistantSection(unittest.TestCase):
                 global_axis=axis,
                 thickness=0.0,
                 effective_length=100.0,
+                height=280.0,
                 local_polygon=poly,
                 global_polygon=poly,
             )
@@ -268,6 +271,21 @@ class TestResistantSection(unittest.TestCase):
                 global_axis=axis,
                 thickness=14.0,
                 effective_length=-10.0,
+                height=280.0,
+                local_polygon=poly,
+                global_polygon=poly,
+            )
+
+        with self.assertRaises(ValueError):
+            ResistantSegment(
+                segment_id="SEG1",
+                source_panel_id="P1",
+                role=SegmentRole.WEB,
+                local_axis=axis,
+                global_axis=axis,
+                thickness=14.0,
+                effective_length=100.0,
+                height=-280.0,
                 local_polygon=poly,
                 global_polygon=poly,
             )
@@ -287,15 +305,15 @@ class TestResistantSection(unittest.TestCase):
         """Verifica o método touches entre ResistantSegments."""
         axis1 = Axis(Point2D(0.0, 0.0), Point2D(100.0, 0.0))
         poly1 = create_rectangle_polygon(axis1, 14.0)
-        seg1 = ResistantSegment("S1", "P1", SegmentRole.WEB, axis1, axis1, 14.0, 100.0, poly1, poly1)
+        seg1 = ResistantSegment("S1", "P1", SegmentRole.WEB, axis1, axis1, 14.0, 100.0, 280.0, poly1, poly1)
 
         axis2 = Axis(Point2D(100.0, 0.0), Point2D(100.0, 80.0))
         poly2 = create_rectangle_polygon(axis2, 14.0)
-        seg2 = ResistantSegment("S2", "P2", SegmentRole.FLANGE, axis2, axis2, 14.0, 80.0, poly2, poly2)
+        seg2 = ResistantSegment("S2", "P2", SegmentRole.FLANGE, axis2, axis2, 14.0, 80.0, 280.0, poly2, poly2)
 
         axis3 = Axis(Point2D(500.0, 0.0), Point2D(600.0, 0.0))
         poly3 = create_rectangle_polygon(axis3, 14.0)
-        seg3 = ResistantSegment("S3", "P3", SegmentRole.WEB, axis3, axis3, 14.0, 100.0, poly3, poly3)
+        seg3 = ResistantSegment("S3", "P3", SegmentRole.WEB, axis3, axis3, 14.0, 100.0, 280.0, poly3, poly3)
 
         self.assertTrue(seg1.touches(seg2))
         self.assertTrue(seg2.touches(seg1))

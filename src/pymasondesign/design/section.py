@@ -22,6 +22,7 @@ class ResistantSection:
         group_id: Identificador do PanelGroup de origem no modelo estrutural.
         direction: Vetor unitário no sistema global correspondente à direção de análise da alma.
         segments: Coleção imutável de segmentos (almas e abas) que compõem a seção resistente.
+        height: Altura livre da seção resistente no pavimento (H > 0).
         properties: Propriedades seccionais (A, CG, Ixx, Iyy, Ixy, Wx, Wy, rx, ry) em coordenadas locais.
         geometric_section: Instância geométrica da seção (CompositeSection) em coordenadas locais.
         local_to_global: Transform2D que mapeia pontos e vetores do sistema local para o global da planta.
@@ -31,11 +32,14 @@ class ResistantSection:
     group_id: str = field(converter=str)
     direction: Vector2D = field()
     segments: tuple[ResistantSegment, ...] = field(converter=to_tuple)
+    height: float = field(converter=float)
     properties: SectionProperties = field()
     geometric_section: Section = field()
     local_to_global: Transform2D = field()
 
     def __attrs_post_init__(self) -> None:
+        if self.height <= 0:
+            raise ValueError(f"Altura da seção resistente '{self.section_id}' deve ser positiva, obtido: {self.height}.")
         if not self.segments:
             raise ValueError(f"Seção resistente '{self.section_id}' deve conter ao menos um segmento.")
 
