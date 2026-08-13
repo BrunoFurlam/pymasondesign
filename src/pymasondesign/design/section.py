@@ -4,6 +4,7 @@ from attrs import field, frozen
 from pymasondesign.common import to_tuple
 from pymasondesign.geometry.vector import Vector2D
 from pymasondesign.geometry.transform import Transform2D
+from pymasondesign.geometry.tolerances import is_positive
 from pymasondesign.sections.base import Section
 from pymasondesign.sections.properties import SectionProperties
 from pymasondesign.design.segment import ResistantSegment
@@ -38,7 +39,7 @@ class ResistantSection:
     local_to_global: Transform2D = field()
 
     def __attrs_post_init__(self) -> None:
-        if self.height <= 0:
+        if not is_positive(self.height):
             raise ValueError(f"Altura da seção resistente '{self.section_id}' deve ser positiva, obtido: {self.height}.")
         if not self.segments:
             raise ValueError(f"Seção resistente '{self.section_id}' deve conter ao menos um segmento.")

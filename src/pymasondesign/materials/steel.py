@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from attrs import field, frozen
 from pymasondesign.materials.enums import SteelCategory
+from pymasondesign.geometry.tolerances import is_positive, is_within_unit, is_greater
 
 
 @frozen
@@ -19,9 +20,9 @@ class SteelSpecification:
     es: float = field(default=210000.0, converter=float)
 
     def __attrs_post_init__(self) -> None:
-        if self.fyk <= 0:
+        if not is_positive(self.fyk):
             raise ValueError(f"fyk deve ser positivo, obtido {self.fyk}.")
-        if self.es <= 0:
+        if not is_positive(self.es):
             raise ValueError(f"Módulo de elasticidade (Es) deve ser positivo, obtido {self.es}.")
 
     @classmethod
@@ -44,9 +45,9 @@ class SteelSpecification:
         Returns:
             Resistência de cálculo fyd = (fyk * fyk_fraction) / gamma_s.
         """
-        if gamma_s <= 0:
+        if not is_positive(gamma_s):
             raise ValueError(f"gamma_s deve ser estritamente positivo, obtido {gamma_s}.")
-        if fyk_fraction <= 0.0 or fyk_fraction > 1.0:
+        if not is_positive(fyk_fraction) or is_greater(fyk_fraction, 1.0):
             raise ValueError(f"fyk_fraction deve estar no intervalo (0.0, 1.0], obtido {fyk_fraction}.")
 
         return (self.fyk * fyk_fraction) / gamma_s

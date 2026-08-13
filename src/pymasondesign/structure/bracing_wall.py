@@ -4,6 +4,7 @@ from attrs import field, frozen
 from pymasondesign.common import to_tuple
 from pymasondesign.geometry.vector import Vector2D
 from pymasondesign.geometry.transform import Transform2D
+from pymasondesign.geometry.tolerances import is_positive
 from pymasondesign.structure.bracing_segment import BracingSegment
 
 
@@ -32,7 +33,7 @@ class BracingWall:
     local_to_global: Transform2D = field()
 
     def __attrs_post_init__(self) -> None:
-        if self.height <= 0:
+        if not is_positive(self.height):
             raise ValueError(f"Altura da parede de contraventamento '{self.wall_id}' deve ser positiva, obtido: {self.height}.")
         if not self.segments:
             raise ValueError(f"Parede de contraventamento '{self.wall_id}' deve conter ao menos um segmento.")

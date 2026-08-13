@@ -6,6 +6,7 @@ from pymasondesign.materials.block import BlockSpecification
 from pymasondesign.materials.mortar import MortarSpecification
 from pymasondesign.materials.grout import GroutSpecification
 from pymasondesign.materials.masonry import MasonrySpecification
+from pymasondesign.geometry.tolerances import is_close
 
 
 @frozen
@@ -90,17 +91,19 @@ class NBR16868MasonryFactory:
         """Obtém a linha de especificação normativa correspondente ao fbk, material e tipo de parede."""
         fbk_float = float(fbk)
         if material == BlockMaterialType.CONCRETE:
-            if fbk_float not in NBR16868_CONCRETE_TABLE:
+            matching_key = next((k for k in NBR16868_CONCRETE_TABLE if is_close(k, fbk_float)), None)
+            if matching_key is None:
                 available = list(NBR16868_CONCRETE_TABLE.keys())
                 raise KeyError(f"fbk={fbk} MPa não encontrado para blocos de concreto. Disponíveis: {available}")
-            return NBR16868_CONCRETE_TABLE[fbk_float]
+            return NBR16868_CONCRETE_TABLE[matching_key]
         elif material == BlockMaterialType.CERAMIC:
             table = NBR16868_CERAMIC_SOLID_TABLE if wall_type == CeramicWallType.SOLID else NBR16868_CERAMIC_HOLLOW_TABLE
-            if fbk_float not in table:
+            matching_key = next((k for k in table if is_close(k, fbk_float)), None)
+            if matching_key is None:
                 available = list(table.keys())
                 tipo = "maciça" if wall_type == CeramicWallType.SOLID else "vazada"
                 raise KeyError(f"fbk={fbk} MPa não encontrado para blocos cerâmicos de parede {tipo}. Disponíveis: {available}")
-            return table[fbk_float]
+            return table[matching_key]
         else:
             raise NotImplementedError(f"Tabela normativa não disponível para {material}.")
 

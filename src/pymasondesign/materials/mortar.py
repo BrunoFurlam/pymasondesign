@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from attrs import field, frozen
+from pymasondesign.geometry.tolerances import is_positive
 
 
 @frozen
@@ -14,5 +15,5 @@ class MortarSpecification:
     fa: float = field(converter=float)
 
     def __attrs_post_init__(self) -> None:
-        if self.fa <= 0:
+        if not is_positive(self.fa):
             raise ValueError(f"fa (resistência da argamassa) deve ser positiva, obtido {self.fa}.")

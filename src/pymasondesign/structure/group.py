@@ -25,7 +25,9 @@ class PanelGroup:
         seen_ids = set()
         for p in self.panels:
             if p.panel_id in seen_ids:
-                raise ValueError(f"ID de painel duplicado no grupo '{self.group_id}': '{p.panel_id}'.")
+                raise ValueError(
+                    f"ID de painel duplicado no grupo '{self.group_id}': '{p.panel_id}'."
+                )
             seen_ids.add(p.panel_id)
 
     @property

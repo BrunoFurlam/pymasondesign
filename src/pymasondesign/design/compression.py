@@ -3,7 +3,13 @@ from __future__ import annotations
 import math
 from attrs import field, frozen
 from pymasondesign.common import to_tuple
-from pymasondesign.geometry.tolerances import GEOMETRIC_TOLERANCE, is_close, is_zero
+from pymasondesign.geometry.tolerances import (
+    is_positive,
+    is_negative,
+    is_non_negative,
+    is_greater,
+    is_less_or_equal,
+)
 from pymasondesign.sections.properties import SectionProperties
 from pymasondesign.materials.masonry import MasonrySpecification
 from pymasondesign.mechanics.forces import SectionForces
@@ -36,13 +42,13 @@ class CompressionDesignOptions:
     max_interval_length: float | None = field(default=None)
 
     def __attrs_post_init__(self) -> None:
-        if self.gamma_m <= 0:
+        if not is_positive(self.gamma_m):
             raise ValueError(f"gamma_m deve ser estritamente positivo, obtido: {self.gamma_m}.")
-        if self.k_flexure <= 0:
+        if not is_positive(self.k_flexure):
             raise ValueError(f"k_flexure deve ser estritamente positivo, obtido: {self.k_flexure}.")
-        if self.max_slenderness <= 0:
+        if not is_positive(self.max_slenderness):
             raise ValueError(f"max_slenderness deve ser estritamente positivo, obtido: {self.max_slenderness}.")
-        if self.max_interval_length is not None and self.max_interval_length <= 0:
+        if self.max_interval_length is not None and not is_positive(self.max_interval_length):
             raise ValueError(
                 f"max_interval_length deve ser positivo se fornecido, obtido: {self.max_interval_length}."
             )
@@ -90,7 +96,7 @@ class CompressionDesignResult:
     @property
     def is_slenderness_ok(self) -> bool:
         """Indica se a esbeltez atende ao limite normativo."""
-        return self.slenderness <= self.options.max_slenderness
+        return is_less_or_equal(self.slenderness, self.options.max_slenderness)
 
 
 @frozen
@@ -141,9 +147,9 @@ class CompressionDesignService:
     @staticmethod
     def calculate_slenderness(height: float, thickness: float) -> float:
         """Calcula o índice de esbeltez da parede/seção: lambda = h_ef / t_ef."""
-        if thickness <= 0:
+        if not is_positive(thickness):
             raise ValueError(f"Espessura deve ser positiva, obtido: {thickness}.")
-        if height <= 0:
+        if not is_positive(height):
             raise ValueError(f"Altura deve ser positiva, obtido: {height}.")
         return height / thickness
 
@@ -167,7 +173,7 @@ class CompressionDesignService:
             sigma_eq(x, y) = c0 / R + (cx * x + cy * y) / K
         """
         raw_plane = MechanicsService.calculate_normal_stress_plane(forces, properties)
-        c0_eq = raw_plane.c0 / r_factor if r_factor > 0 else raw_plane.c0
+        c0_eq = raw_plane.c0 / r_factor if is_positive(r_factor) else raw_plane.c0
         cx_eq = raw_plane.cx / k_flexure
         cy_eq = raw_plane.cy / k_flexure
         return NormalStressPlane(c0=c0_eq, cx=cx_eq, cy=cy_eq)
@@ -197,10 +203,10 @@ class CompressionDesignService:
         t_ef = min(seg.thickness for seg in section.segments)
         slenderness = cls.calculate_slenderness(section.height, t_ef)
         r_factor = cls.calculate_reduction_factor(section.height, t_ef)
-        slenderness_ok = (slenderness <= opts.max_slenderness) and (r_factor > 0.0)
+        slenderness_ok = is_less_or_equal(slenderness, opts.max_slenderness) and is_positive(r_factor)
 
         # 2. Plano de Tensões Equivalentes
-        r_eff = r_factor if r_factor > 0.0 else 1.0
+        r_eff = r_factor if is_positive(r_factor) else 1.0
         eq_plane = cls.calculate_equivalent_stress_plane(
             forces=forces,
             properties=section.properties,
@@ -231,16 +237,16 @@ class CompressionDesignService:
             base_spans: list[tuple[float, float, str]] = []
 
             # Verifica se há cruzamento com a Linha Neutra (sig = 0)
-            if sig_start < -GEOMETRIC_TOLERANCE and sig_end < -GEOMETRIC_TOLERANCE:
+            if is_negative(sig_start) and is_negative(sig_end):
                 base_spans.append((0.0, l_seg, "COMP"))
-            elif sig_start >= -GEOMETRIC_TOLERANCE and sig_end >= -GEOMETRIC_TOLERANCE:
+            elif is_non_negative(sig_start) and is_non_negative(sig_end):
                 base_spans.append((0.0, l_seg, "TENS"))
             else:
                 # Interpolação linear da posição da linha neutra no segmento
                 s_zero = (-sig_start) / (sig_end - sig_start) * l_seg
                 s_zero = max(0.0, min(l_seg, s_zero))
 
-                if sig_start < 0:
+                if is_negative(sig_start):
                     base_spans.append((0.0, s_zero, "COMP"))
                     base_spans.append((s_zero, l_seg, "TENS"))
                 else:
@@ -251,13 +257,13 @@ class CompressionDesignService:
             sub_spans: list[tuple[float, float, str]] = []
             for s_a, s_b, kind in base_spans:
                 span_len = s_b - s_a
-                if span_len <= GEOMETRIC_TOLERANCE:
+                if not is_positive(span_len):
                     continue
 
                 if (
                     kind == "TENS"
                     or opts.max_interval_length is None
-                    or span_len <= opts.max_interval_length
+                    or is_less_or_equal(span_len, opts.max_interval_length)
                 ):
                     sub_spans.append((s_a, s_b, kind))
                 else:
@@ -288,15 +294,15 @@ class CompressionDesignService:
                     # Pico de tensão de compressão no subintervalo (magnitude positiva)
                     comp_peak = max(-sig_a, -sig_b, 0.0)
 
-                    if comp_peak <= fd_hollow + GEOMETRIC_TOLERANCE:
+                    if is_less_or_equal(comp_peak, fd_hollow):
                         ratio = 0.0
                     else:
-                        if delta_fd > GEOMETRIC_TOLERANCE:
+                        if is_positive(delta_fd):
                             raw_ratio = (comp_peak - fd_hollow) / delta_fd
                         else:
-                            raw_ratio = 1.0 if comp_peak > fd_hollow else 0.0
+                            raw_ratio = 1.0 if is_greater(comp_peak, fd_hollow) else 0.0
 
-                        if raw_ratio > 1.0 + GEOMETRIC_TOLERANCE:
+                        if is_greater(raw_ratio, 1.0):
                             any_infeasible = True
 
                         ratio = min(max(raw_ratio, 0.0), 1.0)
@@ -329,8 +335,8 @@ class CompressionDesignService:
         max_comp = max(-min_stress, 0.0)
         max_tens = max(max_stress, 0.0)
 
-        utilization = max_comp / fd_grouted if fd_grouted > 0 else 0.0
-        is_feasible = (not any_infeasible) and (max_comp <= fd_grouted + GEOMETRIC_TOLERANCE)
+        utilization = max_comp / fd_grouted if is_positive(fd_grouted) else 0.0
+        is_feasible = (not any_infeasible) and is_less_or_equal(max_comp, fd_grouted)
 
         return CompressionDesignResult(
             section=section,
@@ -374,9 +380,9 @@ class CompressionDesignService:
         t_ef = min(seg.thickness for seg in section.segments)
         slenderness = cls.calculate_slenderness(section.height, t_ef)
         r_factor = cls.calculate_reduction_factor(section.height, t_ef)
-        slenderness_ok = (slenderness <= opts.max_slenderness) and (r_factor > 0.0)
+        slenderness_ok = is_less_or_equal(slenderness, opts.max_slenderness) and is_positive(r_factor)
 
-        r_eff = r_factor if r_factor > 0.0 else 1.0
+        r_eff = r_factor if is_positive(r_factor) else 1.0
         eq_plane = cls.calculate_equivalent_stress_plane(
             forces=forces,
             properties=section.properties,
@@ -413,16 +419,16 @@ class CompressionDesignService:
                 sig_b = eq_plane.stress_at(pt_b_x, pt_b_y)
 
                 comp_peak = max(-sig_a, -sig_b, 0.0)
-                if comp_peak > max_comp_stress:
+                if is_greater(comp_peak, max_comp_stress):
                     max_comp_stress = comp_peak
 
                 fd_inv = masonry_spec.calculate_fd(gamma_m=opts.gamma_m, grout_ratio=inv.ratio)
-                if comp_peak > fd_inv + GEOMETRIC_TOLERANCE:
+                if is_greater(comp_peak, fd_inv):
                     stress_ok = False
 
-                if fd_inv > 0:
+                if is_positive(fd_inv):
                     local_ratio = comp_peak / fd_inv
-                    if local_ratio > max_ratio_seen:
+                    if is_greater(local_ratio, max_ratio_seen):
                         max_ratio_seen = local_ratio
 
         fd_total_max = masonry_spec.fk_grouted / opts.gamma_m

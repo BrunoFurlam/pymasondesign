@@ -3,7 +3,7 @@ from __future__ import annotations
 from attrs import field, frozen
 from pymasondesign.geometry.axis import Axis
 from pymasondesign.geometry.polygon import Polygon
-from pymasondesign.geometry.tolerances import JUNCTION_TOLERANCE
+from pymasondesign.geometry.tolerances import JUNCTION_TOLERANCE, is_positive
 from pymasondesign.design.enums import SegmentRole
 
 
@@ -36,11 +36,11 @@ class ResistantSegment:
     global_polygon: Polygon = field()
 
     def __attrs_post_init__(self) -> None:
-        if self.thickness <= 0:
+        if not is_positive(self.thickness):
             raise ValueError(f"Espessura do segmento deve ser positiva, obtido: {self.thickness}.")
-        if self.effective_length <= 0:
+        if not is_positive(self.effective_length):
             raise ValueError(f"Comprimento efetivo do segmento deve ser positivo, obtido: {self.effective_length}.")
-        if self.height <= 0:
+        if not is_positive(self.height):
             raise ValueError(f"Altura do segmento deve ser positiva, obtido: {self.height}.")
 
     @property

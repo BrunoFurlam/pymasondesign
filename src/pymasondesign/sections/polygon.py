@@ -3,6 +3,7 @@ from __future__ import annotations
 from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.polygon import Polygon
+from pymasondesign.geometry.tolerances import is_zero, is_positive
 from pymasondesign.sections.base import Section
 from pymasondesign.sections.properties import SectionProperties
 
@@ -53,11 +54,11 @@ class PolygonSection(Section):
             ixy0_sum += (xi * yj + 2.0 * xi * yi + 2.0 * xj * yj + xj * yi) * cross
 
         signed_area = area_sum / 2.0
-        if abs(signed_area) == 0.0:
+        if is_zero(signed_area):
             raise ValueError("A área da seção poligonal é nula (vértices colineares ou coincidentes).")
 
         area = abs(signed_area)
-        sign = 1.0 if signed_area > 0 else -1.0
+        sign = 1.0 if is_positive(signed_area) else -1.0
 
         cg_x = sign * qy_sum / (6.0 * area)
         cg_y = sign * qx_sum / (6.0 * area)

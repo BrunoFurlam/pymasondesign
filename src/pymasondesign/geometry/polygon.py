@@ -4,7 +4,11 @@ from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.bounds import BoundingBox
 from pymasondesign.geometry.transform import Transform2D
-from pymasondesign.geometry.tolerances import DIVISION_GUARD
+from pymasondesign.geometry.tolerances import (
+    DIVISION_GUARD,
+    is_zero,
+    is_positive,
+)
 
 
 @frozen
@@ -60,7 +64,7 @@ class Polygon:
     def area(self) -> float:
         """Área geométrica positiva do polígono."""
         a = abs(self.signed_area)
-        if a == 0.0:
+        if is_zero(a):
             raise ValueError("A área do polígono é nula (vértices colineares ou coincidentes).")
         return a
 
@@ -83,11 +87,11 @@ class Polygon:
             qy_sum += (xi + xj) * cross
 
         signed_area = area_sum / 2.0
-        if abs(signed_area) == 0.0:
+        if is_zero(signed_area):
             raise ValueError("A área do polígono é nula (vértices colineares ou coincidentes).")
 
         area = abs(signed_area)
-        sign = 1.0 if signed_area > 0 else -1.0
+        sign = 1.0 if is_positive(signed_area) else -1.0
         return Point2D(sign * qy_sum / (6.0 * area), sign * qx_sum / (6.0 * area))
 
     def contains_point(self, point: Point2D) -> bool:

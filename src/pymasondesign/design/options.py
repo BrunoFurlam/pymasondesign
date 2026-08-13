@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from attrs import field, frozen
+from pymasondesign.geometry.tolerances import is_positive
 
 
 @frozen
@@ -17,7 +18,7 @@ class FlangeOptions:
     custom_width: float | None = field(default=None)
 
     def __attrs_post_init__(self) -> None:
-        if self.max_multiplier <= 0:
+        if not is_positive(self.max_multiplier):
             raise ValueError(f"max_multiplier deve ser positivo, obtido: {self.max_multiplier}.")
-        if self.custom_width is not None and self.custom_width <= 0:
+        if self.custom_width is not None and not is_positive(self.custom_width):
             raise ValueError(f"custom_width deve ser positivo quando informado, obtido: {self.custom_width}.")

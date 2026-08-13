@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable
 from pymasondesign.geometry.axis import Axis
 from pymasondesign.geometry.vector import Vector2D
 from pymasondesign.geometry.tolerances import (
-    GEOMETRIC_TOLERANCE,
     JUNCTION_TOLERANCE,
-    is_interior,
+    is_positive,
+    is_greater,
+    is_strictly_between,
+    is_close,
 )
 from pymasondesign.drafting.enums import BondType
 from pymasondesign.drafting.wall import Wall
@@ -29,7 +31,7 @@ class MasonryPanelService:
     @staticmethod
     def derive_panels_from_wall(
         wall: Wall,
-        junctions: tuple[Junction, ...] | list[Junction] = (),
+        junctions: Iterable[Junction] = (),
         default_height: float | None = None,
     ) -> tuple[MasonryPanel, ...]:
         """Deriva a coleção de painéis resistentes de alvenaria (MasonryPanel) a partir de uma parede.
@@ -47,31 +49,28 @@ class MasonryPanelService:
             Tupla contendo as instâncias de MasonryPanel derivadas ao longo do eixo da parede.
         """
         effective_height = wall.height if wall.height is not None else default_height
-        if effective_height is None or effective_height <= 0:
+        if effective_height is None or not is_positive(effective_height):
             raise ValueError(
                 f"Altura da parede '{wall.wall_id}' deve ser fornecida e positiva, obtido: {effective_height}."
             )
 
         wall_len = wall.axis.length
-        if wall_len <= GEOMETRIC_TOLERANCE:
+        if not is_positive(wall_len):
             return ()
 
-        # 1. Coleta e ordenação das aberturas
-        sorted_openings = sorted(wall.openings, key=lambda op: op.offset_along_wall)
-
-        # 2. Gera segmentos sólidos subtraindo os intervalos das aberturas de [0, wall_len]
         solid_intervals: list[tuple[float, float]] = []
         current_s = 0.0
 
-        for op in sorted_openings:
+        for op in sorted(wall.openings, key=lambda o: o.offset_along_wall):
             op_start = max(0.0, op.offset_along_wall)
             op_end = min(wall_len, op.offset_along_wall + op.width)
 
-            if op_start - current_s > GEOMETRIC_TOLERANCE:
+            if is_greater(op_start, current_s):
                 solid_intervals.append((current_s, op_start))
+
             current_s = max(current_s, op_end)
 
-        if wall_len - current_s > GEOMETRIC_TOLERANCE:
+        if is_greater(wall_len, current_s):
             solid_intervals.append((current_s, wall_len))
 
         # 3. Coleta os pontos de corte provenientes de encontros (Junctions)
@@ -80,7 +79,7 @@ class MasonryPanelService:
         for junc in junctions:
             if junc.is_passing(wall.wall_id):
                 offset = wall.axis.projected_offset(junc.point)
-                if offset > GEOMETRIC_TOLERANCE and offset < wall_len - GEOMETRIC_TOLERANCE:
+                if is_strictly_between(offset, 0.0, wall_len):
                     junction_offsets.add(offset)
 
         # 4. Subdivide os intervalos sólidos nos pontos de corte das junções
@@ -92,16 +91,16 @@ class MasonryPanelService:
                 [
                     pt
                     for pt in junction_offsets
-                    if pt > seg_start + GEOMETRIC_TOLERANCE and pt < seg_end - GEOMETRIC_TOLERANCE
+                    if is_strictly_between(pt, seg_start, seg_end)
                 ]
             )
 
             c_start = seg_start
             for cut in seg_cuts:
-                if cut - c_start > GEOMETRIC_TOLERANCE:
+                if is_greater(cut, c_start):
                     final_intervals.append((c_start, cut))
                 c_start = cut
-            if seg_end - c_start > GEOMETRIC_TOLERANCE:
+            if is_greater(seg_end, c_start):
                 final_intervals.append((c_start, seg_end))
 
         # 5. Constrói as instâncias de MasonryPanel
@@ -142,7 +141,9 @@ class MasonryPanelService:
         # 1. Deriva todos os painéis para cada parede da planta baixa
         all_panels: list[MasonryPanel] = []
         for wall in floor_plan.walls:
-            panels = MasonryPanelService.derive_panels_from_wall(wall, junctions, floor_plan.height)
+            panels = MasonryPanelService.derive_panels_from_wall(
+                wall, junctions, floor_plan.height
+            )
             all_panels.extend(panels)
 
         if not all_panels:
@@ -153,8 +154,8 @@ class MasonryPanelService:
 
         def panel_touches_point(panel: MasonryPanel, pt) -> bool:
             return (
-                panel.axis.start.distance_to(pt) <= JUNCTION_TOLERANCE
-                or panel.axis.end.distance_to(pt) <= JUNCTION_TOLERANCE
+                is_close(panel.axis.start.distance_to(pt), 0.0, JUNCTION_TOLERANCE)
+                or is_close(panel.axis.end.distance_to(pt), 0.0, JUNCTION_TOLERANCE)
             )
 
         # 2. Conexões internas entre painéis adjacentes da MESMA parede
@@ -165,8 +166,16 @@ class MasonryPanelService:
                 if p_i.wall_id == p_j.wall_id:
                     # Se extremidades se tocam no mesmo ponto (subdivisão por junção interna sem abertura)
                     if (
-                        p_i.axis.end.distance_to(p_j.axis.start) <= JUNCTION_TOLERANCE
-                        or p_i.axis.start.distance_to(p_j.axis.end) <= JUNCTION_TOLERANCE
+                        is_close(
+                            p_i.axis.end.distance_to(p_j.axis.start),
+                            0.0,
+                            JUNCTION_TOLERANCE,
+                        )
+                        or is_close(
+                            p_i.axis.start.distance_to(p_j.axis.end),
+                            0.0,
+                            JUNCTION_TOLERANCE,
+                        )
                     ):
                         adj[i].add(j)
                         adj[j].add(i)
@@ -182,7 +191,9 @@ class MasonryPanelService:
                     part = junc.get_participation(panel.wall_id)
                     if isinstance(part, PassingWall):
                         passing_indices.append(idx)
-                    elif isinstance(part, ArrivingWall) and part.bond == BondType.DIRECT:
+                    elif (
+                        isinstance(part, ArrivingWall) and part.bond == BondType.DIRECT
+                    ):
                         direct_arriving_indices.append(idx)
 
             # Conecta arriving com BondType.DIRECT aos passing panels
@@ -265,7 +276,9 @@ class MasonryPanelService:
             Instância imutável de BuildingModel contendo o catálogo de plantas e os pavimentos ordenados.
         """
         if not building.stories:
-            raise ValueError(f"O edifício '{building.building_id}' não possui pavimentos para derivar o modelo.")
+            raise ValueError(
+                f"O edifício '{building.building_id}' não possui pavimentos para derivar o modelo."
+            )
 
         distinct_plans = {
             fp.plan_id: MasonryPanelService.derive_floor_plan_model(fp)

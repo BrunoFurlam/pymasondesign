@@ -1,8 +1,16 @@
+from __future__ import annotations
+ 
 from pymasondesign.sections.base import Section
 from pymasondesign.sections.properties import SectionProperties
 from pymasondesign.mechanics.forces import SectionForces
 from pymasondesign.mechanics.stress_plane import NormalStressPlane
 from pymasondesign.mechanics.enums import StressRegime
+from pymasondesign.geometry.tolerances import (
+    is_positive,
+    is_negative,
+    is_zero,
+    is_not_zero,
+)
 
 # Constante de tolerância numérica padrão para esforços e verificações
 DEFAULT_TOLERANCE: float = 1e-6
@@ -55,14 +63,14 @@ class MechanicsService:
             cy = (Mx * Iyy - My * Ixy) / D
         onde D = Ixx * Iyy - Ixy^2.
         """
-        if properties.area <= 0:
+        if not is_positive(properties.area):
             raise ValueError(f"A área da seção deve ser estritamente positiva, obtido: {properties.area}.")
 
         c0 = forces.normal / properties.area
 
         det = properties.ixx * properties.iyy - properties.ixy**2
-        if det == 0:
-            if forces.moment_x != 0.0 or forces.moment_y != 0.0:
+        if is_zero(det):
+            if is_not_zero(forces.moment_x) or is_not_zero(forces.moment_y):
                 raise ZeroDivisionError("Determinante dos momentos de inércia é nulo para momentos não-nulos.")
             cx = 0.0
             cy = 0.0
@@ -80,9 +88,9 @@ class MechanicsService:
             Tupla (ex, ey). Se N for nulo, retorna (inf, inf) caso haja momentos ou (0.0, 0.0).
         """
         abs_n = abs(forces.normal)
-        if abs_n <= DEFAULT_TOLERANCE:
-            ex = float("inf") if abs(forces.moment_y) > DEFAULT_TOLERANCE else 0.0
-            ey = float("inf") if abs(forces.moment_x) > DEFAULT_TOLERANCE else 0.0
+        if is_zero(abs_n, DEFAULT_TOLERANCE):
+            ex = float("inf") if is_not_zero(forces.moment_y, DEFAULT_TOLERANCE) else 0.0
+            ey = float("inf") if is_not_zero(forces.moment_x, DEFAULT_TOLERANCE) else 0.0
             return ex, ey
 
         ex = abs(forces.moment_y) / abs_n
@@ -116,15 +124,15 @@ class MechanicsService:
     @staticmethod
     def classify_stress_regime(forces: SectionForces) -> StressRegime:
         """Classifica o regime de esforço e flexão atuante na seção transversal."""
-        has_n = abs(forces.normal) > DEFAULT_TOLERANCE
-        has_mx = abs(forces.moment_x) > DEFAULT_TOLERANCE
-        has_my = abs(forces.moment_y) > DEFAULT_TOLERANCE
+        has_n = is_not_zero(forces.normal, DEFAULT_TOLERANCE)
+        has_mx = is_not_zero(forces.moment_x, DEFAULT_TOLERANCE)
+        has_my = is_not_zero(forces.moment_y, DEFAULT_TOLERANCE)
 
         if not has_n and not has_mx and not has_my:
             return StressRegime.NO_LOAD
 
         if not has_mx and not has_my:
-            return StressRegime.PURE_COMPRESSION if forces.normal < 0 else StressRegime.PURE_TENSION
+            return StressRegime.PURE_COMPRESSION if is_negative(forces.normal) else StressRegime.PURE_TENSION
 
         if not has_n:
             if has_mx and has_my:
@@ -132,7 +140,7 @@ class MechanicsService:
             return StressRegime.PURE_BENDING_X if has_mx else StressRegime.PURE_BENDING_Y
 
         # Com esforço normal presente
-        if forces.normal < 0:
+        if is_negative(forces.normal):
             if has_mx and has_my:
                 return StressRegime.FLEXO_COMPRESSION_XY
             return StressRegime.FLEXO_COMPRESSION_X if has_mx else StressRegime.FLEXO_COMPRESSION_Y

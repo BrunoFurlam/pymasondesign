@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
+from pymasondesign.geometry.tolerances import is_zero
 
 
 @frozen
@@ -45,7 +46,7 @@ class Vector2D:
     def normalized(self) -> Vector2D:
         """Retorna o vetor unitário (versor) na mesma direção."""
         mag = self.magnitude
-        if mag == 0:
+        if is_zero(mag):
             raise ZeroDivisionError("Não é possível normalizar o vetor nulo.")
         return Vector2D(x=self.x / mag, y=self.y / mag)
 
@@ -97,7 +98,7 @@ class Vector2D:
         return self * factor
 
     def __truediv__(self, divisor: float) -> Vector2D:
-        if divisor == 0:
+        if is_zero(divisor):
             raise ZeroDivisionError("Divisão por zero em Vector2D.")
         return Vector2D(x=self.x / divisor, y=self.y / divisor)
 

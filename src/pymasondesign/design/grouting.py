@@ -2,7 +2,16 @@ from __future__ import annotations
 
 from attrs import field, frozen
 from pymasondesign.common import to_tuple
-from pymasondesign.geometry.tolerances import GEOMETRIC_TOLERANCE, is_close, is_zero
+from pymasondesign.geometry.tolerances import (
+    GEOMETRIC_TOLERANCE,
+    is_close,
+    is_zero,
+    is_positive,
+    is_negative,
+    is_less_or_equal,
+    is_within_unit,
+    is_between,
+)
 from pymasondesign.design.section import ResistantSection
 
 
@@ -21,15 +30,15 @@ class GroutInterval:
     ratio: float = field(converter=float)
 
     def __attrs_post_init__(self) -> None:
-        if self.start_offset < 0.0:
+        if is_negative(self.start_offset):
             raise ValueError(
                 f"start_offset do intervalo de grauteamento não pode ser negativo, obtido: {self.start_offset}."
             )
-        if self.end_offset <= self.start_offset:
+        if is_less_or_equal(self.end_offset, self.start_offset):
             raise ValueError(
                 f"end_offset ({self.end_offset}) deve ser estritamente maior que start_offset ({self.start_offset})."
             )
-        if self.ratio < 0.0 or self.ratio > 1.0:
+        if not is_within_unit(self.ratio):
             raise ValueError(
                 f"Porcentagem de grauteamento (ratio) deve estar no intervalo [0.0, 1.0], obtido: {self.ratio}."
             )
@@ -51,7 +60,7 @@ class GroutInterval:
 
     def contains(self, offset: float, tolerance: float = GEOMETRIC_TOLERANCE) -> bool:
         """Verifica se uma cota escalar pertence a este intervalo dentro da tolerância."""
-        return (self.start_offset - tolerance) <= offset <= (self.end_offset + tolerance)
+        return is_between(offset, self.start_offset, self.end_offset, inclusive=True, tolerance=tolerance)
 
 
 @frozen
@@ -69,7 +78,7 @@ class SegmentGroutDemand:
     intervals: tuple[GroutInterval, ...] = field(converter=to_tuple)
 
     def __attrs_post_init__(self) -> None:
-        if self.effective_length <= 0.0:
+        if not is_positive(self.effective_length):
             raise ValueError(
                 f"Comprimento efetivo do segmento deve ser positivo, obtido: {self.effective_length}."
             )
@@ -249,7 +258,7 @@ class SectionGroutDemand:
     def weighted_average_ratio(self) -> float:
         """Média ponderada da porcentagem de grauteamento de toda a seção."""
         total_l = self.total_length
-        if total_l <= 0.0:
+        if not is_positive(total_l):
             return 0.0
         return (
             sum(sd.average_ratio * sd.effective_length for sd in self.segment_demands)

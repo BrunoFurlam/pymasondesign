@@ -7,6 +7,10 @@ from pymasondesign.geometry.vector import Vector2D
 from pymasondesign.geometry.tolerances import (
     JUNCTION_TOLERANCE,
     OVERLAP_TOLERANCE,
+    is_positive,
+    is_close,
+    is_less,
+    is_less_or_equal,
     is_within_unit,
     is_at_start,
     is_at_end,
@@ -34,7 +38,7 @@ class FloorPlan:
     walls: tuple[Wall, ...] = field(default=(), converter=to_tuple)
 
     def __attrs_post_init__(self) -> None:
-        if self.height <= 0:
+        if not is_positive(self.height):
             raise ValueError(f"Altura da planta (height) deve ser positiva, obtido {self.height}.")
 
         # Validação de unicidade de IDs de parede
@@ -156,7 +160,7 @@ class FloorPlan:
 
         def get_or_add_point(pt: Point2D) -> Point2D:
             for c in candidate_points:
-                if pt.distance_to(c) <= tolerance:
+                if is_close(pt.distance_to(c), 0.0, tolerance=tolerance):
                     return c
             candidate_points.append(pt)
             return pt
@@ -184,7 +188,7 @@ class FloorPlan:
                     t = v_pt.dot(r) / r_sq
                     if is_within_unit(t, tolerance):
                         p_proj = Point2D(p_start.x + t * r.x, p_start.y + t * r.y)
-                        if end_pt.distance_to(p_proj) <= tolerance:
+                        if is_close(end_pt.distance_to(p_proj), 0.0, tolerance=tolerance):
                             get_or_add_point(p_proj)
 
         # 2. Para cada ponto de encontro encontrado, analisa as incidências de todas as paredes
@@ -202,12 +206,12 @@ class FloorPlan:
 
                 if is_within_unit(t, tolerance):
                     p_proj = Point2D(p_start.x + t * r.x, p_start.y + t * r.y)
-                    if pt.distance_to(p_proj) <= tolerance:
+                    if is_close(pt.distance_to(p_proj), 0.0, tolerance=tolerance):
                         # Chegando no início (START)
-                        if is_at_start(t, tolerance) or pt.distance_to(wall.axis.start) <= tolerance:
+                        if is_at_start(t, tolerance) or is_close(pt.distance_to(wall.axis.start), 0.0, tolerance=tolerance):
                             arriving.append(ArrivingWall.from_wall(wall, WallEnd.START))
                         # Chegando no fim (END)
-                        elif is_at_end(t, tolerance) or pt.distance_to(wall.axis.end) <= tolerance:
+                        elif is_at_end(t, tolerance) or is_close(pt.distance_to(wall.axis.end), 0.0, tolerance=tolerance):
                             arriving.append(ArrivingWall.from_wall(wall, WallEnd.END))
                         # Passando no interior (0 < t < 1)
                         elif is_interior(t, tolerance):
@@ -298,11 +302,11 @@ class FloorPlan:
         """Calcula a meia-espessura projetada da outra parede ao longo do eixo da parede principal."""
         v2 = Vector2D(other_wall.axis.dx, other_wall.axis.dy)
         mag_v2 = v2.magnitude
-        if mag_v1 <= 1e-9 or mag_v2 <= 1e-9:
+        if not is_positive(mag_v1) or not is_positive(mag_v2):
             return other_wall.thickness / 2.0
 
         sin_theta = abs(v1.cross(v2)) / (mag_v1 * mag_v2)
-        if sin_theta <= 1e-4:
+        if is_less_or_equal(sin_theta, JUNCTION_TOLERANCE):
             return other_wall.thickness / 2.0
 
         return (other_wall.thickness / 2.0) / sin_theta
@@ -345,7 +349,7 @@ class FloorPlan:
                 op_start = op.offset_along_wall
                 op_end = op.offset_along_wall + op.width
                 for s_min, s_max, other_id in exclusion_intervals:
-                    if max(op_start, s_min) < min(op_end, s_max) - OVERLAP_TOLERANCE:
+                    if is_less(max(op_start, s_min), min(op_end, s_max), OVERLAP_TOLERANCE):
                         raise ValueError(
                             f"Abertura '{op.opening_id}' na parede '{wall.wall_id}' ([{op_start:.3f}, {op_end:.3f}]) "
                             f"intercepta a zona de cruzamento com a parede '{other_id}' ([{s_min:.3f}, {s_max:.3f}])."

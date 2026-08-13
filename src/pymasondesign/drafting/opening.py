@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from attrs import field, frozen
 from pymasondesign.drafting.enums import OpeningType
+from pymasondesign.geometry.tolerances import is_negative, is_positive
 
 
 @frozen
@@ -25,13 +26,13 @@ class Opening:
     sill_height: float = field(default=0.0, converter=float)
 
     def __attrs_post_init__(self) -> None:
-        if self.offset_along_wall < 0:
+        if is_negative(self.offset_along_wall):
             raise ValueError(f"offset_along_wall deve ser não-negativo, obtido {self.offset_along_wall}.")
-        if self.width <= 0:
+        if not is_positive(self.width):
             raise ValueError(f"Largura da abertura (width) deve ser positiva, obtido {self.width}.")
-        if self.height <= 0:
+        if not is_positive(self.height):
             raise ValueError(f"Altura da abertura (height) deve ser positiva, obtido {self.height}.")
-        if self.sill_height < 0:
+        if is_negative(self.sill_height):
             raise ValueError(f"sill_height deve ser não-negativo, obtido {self.sill_height}.")
 
     @classmethod

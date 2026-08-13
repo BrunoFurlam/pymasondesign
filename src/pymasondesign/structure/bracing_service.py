@@ -8,9 +8,12 @@ from pymasondesign.geometry.axis import Axis
 from pymasondesign.geometry.polygon import Polygon
 from pymasondesign.geometry.transform import Transform2D
 from pymasondesign.geometry.tolerances import (
-    GEOMETRIC_TOLERANCE,
     JUNCTION_TOLERANCE,
     is_close,
+    is_positive,
+    is_greater,
+    is_less,
+    is_less_or_equal,
 )
 from pymasondesign.structure.enums import SegmentRole
 from pymasondesign.structure.bracing_segment import (
@@ -38,11 +41,11 @@ class BracingOptions:
     custom_width: float | None = field(default=None)
 
     def __attrs_post_init__(self) -> None:
-        if self.flange_multiplier <= 0:
+        if not is_positive(self.flange_multiplier):
             raise ValueError(
                 f"Multiplicador de flange (flange_multiplier) deve ser positivo, obtido: {self.flange_multiplier}."
             )
-        if self.custom_width is not None and self.custom_width <= 0:
+        if self.custom_width is not None and not is_positive(self.custom_width):
             raise ValueError(
                 f"Largura colaborante customizada (custom_width) deve ser positiva, obtido: {self.custom_width}."
             )
@@ -71,7 +74,7 @@ class BracingWallService:
         Returns:
             Tupla de instâncias de BracingWall derivadas no grupo para a direção especificada.
         """
-        if direction.magnitude <= GEOMETRIC_TOLERANCE:
+        if not is_positive(direction.magnitude):
             raise ValueError("Vetor de direção de análise não pode ser nulo.")
 
         flange_opts = options if options is not None else BracingOptions()
@@ -84,7 +87,7 @@ class BracingWallService:
         for p in group.panels:
             u_p = p.axis.direction
             cross_val = abs(u_p.cross(u_dir))
-            if cross_val <= JUNCTION_TOLERANCE:
+            if is_less_or_equal(cross_val, JUNCTION_TOLERANCE):
                 web_panels.append(p)
             else:
                 transverse_panels.append(p)
@@ -115,7 +118,7 @@ class BracingWallService:
                                     + flange_opts.flange_multiplier * w_j.thickness
                                 )
                             # Duas almas são acopladas apenas se o painel transversal tem vão menor que a soma dos limites de abas
-                            if t_p.length < max_couple_len:
+                            if is_less(t_p.length, max_couple_len):
                                 shares_transverse = True
                                 break
 
@@ -202,7 +205,7 @@ class BracingWallService:
 
                     # Precedência da alma: a aba projeta-se para fora da face externa da alma (offset = w_thick / 2)
                     l_disp_ext = l_disp - (w_thick / 2.0)
-                    if l_disp_ext <= JUNCTION_TOLERANCE:
+                    if is_less_or_equal(l_disp_ext, JUNCTION_TOLERANCE):
                         continue
 
                     # Limite da largura efetiva
@@ -223,15 +226,15 @@ class BracingWallService:
                                 else t_axis.end
                             )
                             dist_between_webs = j_pt.distance_to(other_pt)
-                            if dist_between_webs > JUNCTION_TOLERANCE:
+                            if is_greater(dist_between_webs, JUNCTION_TOLERANCE):
                                 v_other = Vector2D(other_pt.x - j_pt.x, other_pt.y - j_pt.y)
-                                if v_other.dot(u_branch) > 0.0:
+                                if is_positive(v_other.dot(u_branch)):
                                     clear_span = dist_between_webs - (w_thick + other_w.thickness) / 2.0
-                                    if clear_span > 0:
+                                    if is_positive(clear_span):
                                         bf_limit = min(bf_limit, clear_span / 2.0)
 
                     bf = min(l_disp_ext, bf_limit)
-                    if bf <= JUNCTION_TOLERANCE:
+                    if is_less_or_equal(bf, JUNCTION_TOLERANCE):
                         continue
 
                     # Ponto inicial na face externa da alma
@@ -259,7 +262,7 @@ class BracingWallService:
 
             # Cálculo do centróide global combinado
             total_a = sum(poly.area for _, _, _, _, _, _, poly in segments_data)
-            if total_a <= 0:
+            if not is_positive(total_a):
                 continue
 
             qx_global = sum(poly.area * poly.centroid.y for _, _, _, _, _, _, poly in segments_data)

@@ -4,6 +4,7 @@ from attrs import field, frozen
 from pymasondesign.common import to_tuple
 from pymasondesign.drafting.floor_plan import FloorPlan
 from pymasondesign.drafting.story import Story
+from pymasondesign.geometry.tolerances import is_less_or_equal
 
 
 @frozen
@@ -52,7 +53,7 @@ class Building:
         for i in range(len(self.stories) - 1):
             upper = self.stories[i]
             lower = self.stories[i + 1]
-            if upper.elevation <= lower.elevation:
+            if is_less_or_equal(upper.elevation, lower.elevation):
                 raise ValueError(
                     f"Os pavimentos devem estar ordenados estritamente de cima para baixo (cota Z decrescente). "
                     f"O pavimento '{upper.story_id}' (cota {upper.elevation}) não é estritamente superior a "

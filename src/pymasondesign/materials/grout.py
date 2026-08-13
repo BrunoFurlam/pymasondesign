@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from attrs import field, frozen
+from pymasondesign.geometry.tolerances import is_positive
 
 
 @frozen
@@ -14,5 +15,5 @@ class GroutSpecification:
     fg: float = field(converter=float)
 
     def __attrs_post_init__(self) -> None:
-        if self.fg <= 0:
+        if not is_positive(self.fg):
             raise ValueError(f"fg (resistência do graute aos 28 dias) deve ser positiva, obtido {self.fg}.")

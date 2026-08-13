@@ -3,7 +3,12 @@ from __future__ import annotations
 from attrs import field, frozen
 from pymasondesign.common import to_tuple
 from pymasondesign.geometry.axis import Axis
-from pymasondesign.geometry.tolerances import OVERLAP_TOLERANCE
+from pymasondesign.geometry.tolerances import (
+    OVERLAP_TOLERANCE,
+    is_greater,
+    is_less,
+    is_positive,
+)
 from pymasondesign.drafting.enums import BondType, WallEnd
 from pymasondesign.drafting.opening import Opening
 
@@ -39,9 +44,9 @@ class Wall:
     end_bond: BondType = field(default=BondType.NONE, converter=_convert_bond)
 
     def __attrs_post_init__(self) -> None:
-        if self.thickness <= 0:
+        if not is_positive(self.thickness):
             raise ValueError(f"Espessura da parede (thickness) deve ser positiva, obtido {self.thickness}.")
-        if self.height is not None and self.height <= 0:
+        if self.height is not None and not is_positive(self.height):
             raise ValueError(f"Altura da parede (height) deve ser positiva se fornecida, obtido {self.height}.")
 
         # Validação das aberturas
@@ -50,7 +55,7 @@ class Wall:
 
         for i, op in enumerate(sorted_openings):
             op_end = op.offset_along_wall + op.width
-            if op_end > wall_len + OVERLAP_TOLERANCE:
+            if is_greater(op_end, wall_len, OVERLAP_TOLERANCE):
                 raise ValueError(
                     f"Abertura '{op.opening_id}' excede o comprimento da parede '{self.wall_id}' "
                     f"(fim da abertura em {op_end:.3f}, comprimento da parede={wall_len:.3f})."
@@ -58,7 +63,7 @@ class Wall:
             if i > 0:
                 prev_op = sorted_openings[i - 1]
                 prev_end = prev_op.offset_along_wall + prev_op.width
-                if op.offset_along_wall < prev_end - OVERLAP_TOLERANCE:
+                if is_less(op.offset_along_wall, prev_end, OVERLAP_TOLERANCE):
                     raise ValueError(
                         f"Abertura '{op.opening_id}' sobrepõe a abertura anterior '{prev_op.opening_id}' "
                         f"na parede '{self.wall_id}'."

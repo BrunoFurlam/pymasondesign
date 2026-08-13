@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from attrs import field, frozen
 from pymasondesign.materials.enums import BlockMaterialType, StrengthClass, CeramicWallType
+from pymasondesign.geometry.tolerances import is_positive
 
 
 @frozen
@@ -21,7 +22,7 @@ class BlockSpecification:
     wall_type: CeramicWallType | None = field(default=None)
 
     def __attrs_post_init__(self) -> None:
-        if self.fbk <= 0:
+        if not is_positive(self.fbk):
             raise ValueError(f"fbk (resistência do bloco na área bruta) deve ser positivo, obtido {self.fbk}.")
 
     @classmethod

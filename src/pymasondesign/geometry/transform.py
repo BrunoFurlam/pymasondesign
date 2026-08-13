@@ -4,7 +4,11 @@ import math
 from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.vector import Vector2D
-from pymasondesign.geometry.tolerances import GEOMETRIC_TOLERANCE
+from pymasondesign.geometry.tolerances import (
+    GEOMETRIC_TOLERANCE,
+    is_zero,
+    is_negative,
+)
 
 
 @frozen
@@ -25,7 +29,7 @@ class Transform2D:
     v_axis: Vector2D = field(default=Vector2D(0.0, 1.0))
 
     def __attrs_post_init__(self) -> None:
-        if self.determinant == 0.0:
+        if is_zero(self.determinant):
             raise ValueError("Os vetores diretores u_axis e v_axis não podem ser colineares (determinante nulo).")
 
     @property
@@ -36,12 +40,12 @@ class Transform2D:
     @property
     def is_reflection(self) -> bool:
         """Indica se a transformação contém reflexão/espelhamento (determinante < 0)."""
-        return self.determinant < 0.0
+        return is_negative(self.determinant)
 
     @property
     def is_orthogonal(self) -> bool:
         """Indica se os eixos locais são perpendiculares entre si: u . v == 0."""
-        return math.isclose(self.u_axis.dot(self.v_axis), 0.0, abs_tol=GEOMETRIC_TOLERANCE)
+        return is_zero(self.u_axis.dot(self.v_axis), tolerance=GEOMETRIC_TOLERANCE)
 
     @classmethod
     def identity(cls) -> Transform2D:

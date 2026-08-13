@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from attrs import field, frozen
 from pymasondesign.materials.masonry import MasonrySpecification
+from pymasondesign.geometry.tolerances import is_positive
 
 
 @frozen
@@ -23,6 +24,5 @@ class Story:
     plan_id: str = field(converter=str)
 
     def __attrs_post_init__(self) -> None:
-        if self.story_height <= 0:
+        if not is_positive(self.story_height):
             raise ValueError(f"story_height deve ser positivo, obtido {self.story_height}.")
-

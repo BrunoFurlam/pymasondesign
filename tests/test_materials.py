@@ -179,7 +179,11 @@ class TestMaterials(unittest.TestCase):
         entry4 = NBR16868MasonryFactory.get_entry(4.0)
         self.assertEqual(entry4.strength_class, StrengthClass.B)
 
-        # 5. fbk inválido dispara KeyError
+        # 5. fbk com pequena variação de ponto flutuante é aceito via tolerância
+        entry14_float = NBR16868MasonryFactory.get_entry(14.00000000001)
+        self.assertAlmostEqual(entry14_float.fbk, 14.0)
+
+        # 6. fbk inválido dispara KeyError
         with self.assertRaises(KeyError):
             NBR16868MasonryFactory.get_entry(99.0)
 

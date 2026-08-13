@@ -11,9 +11,14 @@ from pymasondesign.geometry.tolerances import (
     GEOMETRIC_TOLERANCE,
     JUNCTION_TOLERANCE,
     is_zero,
+    is_not_zero,
     is_close,
     is_within_unit,
     is_at_vertex,
+    is_greater,
+    is_greater_or_equal,
+    is_non_positive,
+    is_less_or_equal,
 )
 
 
@@ -58,7 +63,7 @@ class Axis:
     end: Point2D = field()
 
     def __attrs_post_init__(self) -> None:
-        if self.start == self.end:
+        if self.start.is_same(self.end, GEOMETRIC_TOLERANCE):
             raise ValueError(f"Eixo não pode ter comprimento nulo: start={self.start} e end={self.end}.")
 
     @property
@@ -131,11 +136,11 @@ class Axis:
         w = Vector2D(point.x - self.start.x, point.y - self.start.y)
 
         c1 = w.dot(v)
-        if c1 <= 0.0:
+        if is_non_positive(c1):
             return point.distance_to(self.start)
 
         c2 = v.dot(v)
-        if c2 <= c1:
+        if is_greater_or_equal(c1, c2):
             return point.distance_to(self.end)
 
         b = c1 / c2
@@ -173,17 +178,17 @@ class Axis:
         """Verifica se este eixo é paralelo ao outro eixo dentro da tolerância."""
         v1 = Vector2D(self.dx, self.dy)
         v2 = Vector2D(other.dx, other.dy)
-        return abs(v1.cross(v2)) <= tolerance * self.length * other.length
+        return is_less_or_equal(abs(v1.cross(v2)), tolerance * self.length * other.length, tolerance=0.0)
 
     def is_collinear(self, other: Axis, tolerance: float = GEOMETRIC_TOLERANCE) -> bool:
         """Verifica se ambos os eixos pertencem à mesma reta suporte no plano 2D."""
         if not self.is_parallel(other, tolerance):
             return False
         v_start = Vector2D(other.start.x - self.start.x, other.start.y - self.start.y)
-        if v_start.magnitude <= tolerance:
+        if is_zero(v_start.magnitude, tolerance):
             return True
         v1 = Vector2D(self.dx, self.dy)
-        return abs(v1.cross(v_start)) <= tolerance * self.length * v_start.magnitude
+        return is_less_or_equal(abs(v1.cross(v_start)), tolerance * self.length * v_start.magnitude, tolerance=0.0)
 
     def intersect(self, other: Axis, tolerance: float = GEOMETRIC_TOLERANCE) -> AxisIntersectionResult:
         """Calcula a relação e a interseção geométrica exata entre dois eixos lineares 2D.
@@ -203,7 +208,7 @@ class Axis:
         # 1. Linhas paralelas ou colineares
         if is_zero(r_cross_s, tolerance):
             # Não colineares -> Paralelas disjuntas
-            if not is_zero(qp_cross_r, tolerance):
+            if is_not_zero(qp_cross_r, tolerance):
                 return AxisIntersectionResult(relation=AxisRelation.DISJOINT)
 
             # Colineares: projetamos 'other' sobre o eixo 'self' no parâmetro t
@@ -218,7 +223,7 @@ class Axis:
             t_end = min(1.0, t_max)
 
             # Sem sobreposição
-            if t_start > t_end + tolerance:
+            if is_greater(t_start, t_end, tolerance):
                 return AxisIntersectionResult(relation=AxisRelation.DISJOINT)
 
             # Toque em um único ponto extremo

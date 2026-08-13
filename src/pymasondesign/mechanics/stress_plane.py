@@ -5,6 +5,7 @@ from typing import Iterable
 from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.transform import Transform2D
+from pymasondesign.geometry.tolerances import is_zero, is_not_zero
 
 
 @frozen
@@ -38,14 +39,14 @@ class NormalStressPlane:
     def neutral_axis_distance(self) -> float:
         """Distância perpendicular do centro de gravidade (0, 0) até a Linha Neutra (σ = 0)."""
         grad_norm = math.hypot(self.cx, self.cy)
-        if grad_norm == 0:
-            return float("inf") if self.c0 != 0 else 0.0
+        if is_zero(grad_norm):
+            return float("inf") if is_not_zero(self.c0) else 0.0
         return abs(self.c0) / grad_norm
 
     @property
     def neutral_axis_angle(self) -> float:
         """Ângulo de inclinação da Linha Neutra em relação ao eixo X (em radianos)."""
-        if self.cx == 0.0 and self.cy == 0.0:
+        if is_zero(self.cx) and is_zero(self.cy):
             return 0.0
         return math.atan2(-self.cx, self.cy)
 

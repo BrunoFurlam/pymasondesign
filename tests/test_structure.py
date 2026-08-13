@@ -565,6 +565,11 @@ class TestStructure(unittest.TestCase):
         with self.assertRaises(ValueError):
             BuildingModel("EDIF_SAME_Z", floor_plan_models=(fpm1,), stories=(st_p1, st_p1_same_z))
 
+        # 8. Cota Z quase igual dentro da tolerância (1e-10) também é rejeitada
+        st_p1_almost_same_z = StoryModel("PAV_01C", elevation=3.00000000001, story_height=3.0, masonry_spec=mat, plan_id="PLAN_TIPO")
+        with self.assertRaises(ValueError):
+            BuildingModel("EDIF_TOL_Z", floor_plan_models=(fpm1,), stories=(st_p1_almost_same_z, st_p1))
+
     def test_derive_building_model(self):
         mat = NBR16868MasonryFactory.create(12.0)
 

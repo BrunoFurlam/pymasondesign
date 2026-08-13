@@ -3,6 +3,7 @@ from __future__ import annotations
 from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.bounds import BoundingBox
+from pymasondesign.geometry.tolerances import is_positive
 from pymasondesign.sections.base import Section
 from pymasondesign.sections.properties import SectionProperties
 
@@ -22,9 +23,9 @@ class RectangularSection(Section):
     origin: Point2D = field(default=Point2D(0.0, 0.0))
 
     def __attrs_post_init__(self) -> None:
-        if self.width <= 0:
+        if not is_positive(self.width):
             raise ValueError(f"Largura (width) deve ser positiva, recebido {self.width}.")
-        if self.height <= 0:
+        if not is_positive(self.height):
             raise ValueError(f"Altura (height) deve ser positiva, recebido {self.height}.")
 
     def compute_properties(self) -> SectionProperties:

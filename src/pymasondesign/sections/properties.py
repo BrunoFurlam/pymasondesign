@@ -4,6 +4,7 @@ import math
 from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.bounds import BoundingBox
+from pymasondesign.geometry.tolerances import is_positive
 
 
 @frozen
@@ -49,12 +50,12 @@ class SectionProperties:
     @property
     def rx(self) -> float:
         """Raio de giração em torno do eixo X centroidal: rx = sqrt(Ixx / A)."""
-        return math.sqrt(self.ixx / self.area) if self.area > 0 else 0.0
+        return math.sqrt(self.ixx / self.area) if is_positive(self.area) else 0.0
 
     @property
     def ry(self) -> float:
         """Raio de giração em torno do eixo Y centroidal: ry = sqrt(Iyy / A)."""
-        return math.sqrt(self.iyy / self.area) if self.area > 0 else 0.0
+        return math.sqrt(self.iyy / self.area) if is_positive(self.area) else 0.0
 
     @property
     def y_top(self) -> float:
@@ -80,25 +81,25 @@ class SectionProperties:
     def wx_top(self) -> float:
         """Módulo de resistência elástico para a fibra superior: Ixx / y_top."""
         d = self.y_top
-        return self.ixx / d if d > 0 else 0.0
+        return self.ixx / d if is_positive(d) else 0.0
 
     @property
     def wx_bot(self) -> float:
         """Módulo de resistência elástico para a fibra inferior: Ixx / y_bot."""
         d = self.y_bot
-        return self.ixx / d if d > 0 else 0.0
+        return self.ixx / d if is_positive(d) else 0.0
 
     @property
     def wy_right(self) -> float:
         """Módulo de resistência elástico para a fibra direita: Iyy / x_right."""
         d = self.x_right
-        return self.iyy / d if d > 0 else 0.0
+        return self.iyy / d if is_positive(d) else 0.0
 
     @property
     def wy_left(self) -> float:
         """Módulo de resistência elástico para a fibra esquerda: Iyy / x_left."""
         d = self.x_left
-        return self.iyy / d if d > 0 else 0.0
+        return self.iyy / d if is_positive(d) else 0.0
 
     @property
     def wx_min(self) -> float:

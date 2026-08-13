@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import math
 from attrs import field, frozen
-from pymasondesign.geometry.tolerances import GEOMETRIC_TOLERANCE
+from pymasondesign.geometry.tolerances import (
+    GEOMETRIC_TOLERANCE,
+    is_close,
+)
 
 
 @frozen
@@ -18,7 +21,7 @@ class Point2D:
 
     def is_same(self, other: Point2D, tolerance: float = GEOMETRIC_TOLERANCE) -> bool:
         """Verifica se dois pontos são geometricamente equivalentes/mesmo ponto dentro da tolerância."""
-        return self.distance_to(other) <= tolerance
+        return is_close(self.distance_to(other), 0.0, tolerance=tolerance)
 
     def translated(self, dx: float, dy: float) -> Point2D:
         """Retorna um novo ponto transladado por (dx, dy)."""

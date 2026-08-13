@@ -3,6 +3,7 @@ from __future__ import annotations
 from attrs import Factory, define, field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.bounds import BoundingBox
+from pymasondesign.geometry.tolerances import is_positive
 from pymasondesign.sections.base import Section
 from pymasondesign.sections.properties import SectionProperties
 
@@ -73,7 +74,7 @@ class CompositeSection(Section):
                 all_ymin.append(props.bounds.ymin)
                 all_ymax.append(props.bounds.ymax)
 
-        if total_area <= 0:
+        if not is_positive(total_area):
             raise ValueError(f"Área líquida resultante deve ser positiva, obtido: {total_area}.")
 
         x_cg = qy / total_area

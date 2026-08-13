@@ -2,6 +2,11 @@ from __future__ import annotations
 
 from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
+from pymasondesign.geometry.tolerances import (
+    GEOMETRIC_TOLERANCE,
+    is_greater,
+    is_between,
+)
 
 
 @frozen
@@ -14,9 +19,9 @@ class BoundingBox:
     ymax: float = field(converter=float)
 
     def __attrs_post_init__(self) -> None:
-        if self.xmin > self.xmax:
+        if is_greater(self.xmin, self.xmax):
             raise ValueError(f"xmin ({self.xmin}) não pode ser maior que xmax ({self.xmax}).")
-        if self.ymin > self.ymax:
+        if is_greater(self.ymin, self.ymax):
             raise ValueError(f"ymin ({self.ymin}) não pode ser maior que ymax ({self.ymax}).")
 
     @property
@@ -34,9 +39,11 @@ class BoundingBox:
         """Centro geométrico do retângulo delimitador."""
         return Point2D((self.xmin + self.xmax) / 2.0, (self.ymin + self.ymax) / 2.0)
 
-    def contains_point(self, point: Point2D) -> bool:
-        """Verifica se um ponto está contido nos limites da caixa."""
-        return self.xmin <= point.x <= self.xmax and self.ymin <= point.y <= self.ymax
+    def contains_point(self, point: Point2D, tolerance: float = GEOMETRIC_TOLERANCE) -> bool:
+        """Verifica se um ponto está contido nos limites da caixa dentro da tolerância."""
+        return is_between(point.x, self.xmin, self.xmax, inclusive=True, tolerance=tolerance) and is_between(
+            point.y, self.ymin, self.ymax, inclusive=True, tolerance=tolerance
+        )
 
     @classmethod
     def from_points(cls, points: list[Point2D]) -> BoundingBox:
