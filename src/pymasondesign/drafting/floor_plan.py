@@ -182,9 +182,9 @@ class FloorPlan:
                         continue
                     # Projeção de end_pt sobre w_j.axis
                     p_start = w_j.axis.start
-                    r = Vector2D(w_j.axis.dx, w_j.axis.dy)
+                    r = w_j.axis.as_vector
                     r_sq = r.dot(r)
-                    v_pt = Vector2D(end_pt.x - p_start.x, end_pt.y - p_start.y)
+                    v_pt = p_start.vector_to(end_pt)
                     t = v_pt.dot(r) / r_sq
                     if is_within_unit(t, tolerance):
                         p_proj = Point2D(p_start.x + t * r.x, p_start.y + t * r.y)
@@ -199,9 +199,9 @@ class FloorPlan:
 
             for wall in self.walls:
                 p_start = wall.axis.start
-                r = Vector2D(wall.axis.dx, wall.axis.dy)
+                r = wall.axis.as_vector
                 r_sq = r.dot(r)
-                v_pt = Vector2D(pt.x - p_start.x, pt.y - p_start.y)
+                v_pt = p_start.vector_to(pt)
                 t = v_pt.dot(r) / r_sq
 
                 if is_within_unit(t, tolerance):
@@ -241,7 +241,7 @@ class FloorPlan:
             raise KeyError(f"Parede '{wall_id}' não encontrada na planta '{self.plan_id}'.")
 
         wall_len = target_wall.length
-        v1 = Vector2D(target_wall.axis.dx, target_wall.axis.dy)
+        v1 = target_wall.axis.as_vector
         mag_v1 = v1.magnitude
 
         intervals: list[tuple[float, float, str]] = []
@@ -300,7 +300,7 @@ class FloorPlan:
     @staticmethod
     def _calc_projected_half_thickness(v1: Vector2D, mag_v1: float, other_wall: Wall) -> float:
         """Calcula a meia-espessura projetada da outra parede ao longo do eixo da parede principal."""
-        v2 = Vector2D(other_wall.axis.dx, other_wall.axis.dy)
+        v2 = other_wall.axis.as_vector
         mag_v2 = v2.magnitude
         if not is_positive(mag_v1) or not is_positive(mag_v2):
             return other_wall.thickness / 2.0

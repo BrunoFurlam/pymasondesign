@@ -82,10 +82,14 @@ class Axis:
         return math.hypot(self.dx, self.dy)
 
     @property
+    def as_vector(self) -> Vector2D:
+        """Vetor Euclidiano 2D orientado de start para end com componentes (dx, dy)."""
+        return Vector2D(self.dx, self.dy)
+
+    @property
     def direction(self) -> Vector2D:
         """Vetor diretor unitário orientado de start para end."""
-        l = self.length
-        return Vector2D(self.dx / l, self.dy / l)
+        return self.as_vector.normalized()
 
     @property
     def normal(self) -> Vector2D:
@@ -108,8 +112,7 @@ class Axis:
         Args:
             distance: Distância a partir do ponto inicial (pode ser negativa ou superior ao comprimento).
         """
-        u = self.direction
-        return Point2D(self.start.x + distance * u.x, self.start.y + distance * u.y)
+        return self.start.moved_by(self.direction * distance)
 
     def projected_offset(self, point: Point2D) -> float:
         """Calcula a distância escalar da projeção ortogonal de um ponto 2D sobre a reta suporte do eixo, a partir de start.
@@ -120,8 +123,7 @@ class Axis:
         Returns:
             Distância escalar ao longo da direção do eixo (0.0 em start, length em end).
         """
-        v = Vector2D(point.x - self.start.x, point.y - self.start.y)
-        return v.dot(self.direction)
+        return self.start.vector_to(point).dot(self.direction)
 
     def distance_to_point(self, point: Point2D) -> float:
         """Calcula a menor distância Euclidiana entre um ponto 2D e o segmento linear do eixo.
@@ -132,8 +134,8 @@ class Axis:
         Returns:
             Menor distância até o segmento de reta (perpendicular ou até as extremidades start/end).
         """
-        v = Vector2D(self.dx, self.dy)
-        w = Vector2D(point.x - self.start.x, point.y - self.start.y)
+        v = self.as_vector
+        w = self.start.vector_to(point)
 
         c1 = w.dot(v)
         if is_non_positive(c1):
@@ -144,7 +146,7 @@ class Axis:
             return point.distance_to(self.end)
 
         b = c1 / c2
-        pb = Point2D(self.start.x + b * v.x, self.start.y + b * v.y)
+        pb = self.start.moved_by(v * b)
         return point.distance_to(pb)
 
     def touches_endpoints(self, other: Axis, tolerance: float = JUNCTION_TOLERANCE) -> bool:
@@ -163,8 +165,8 @@ class Axis:
     def translated(self, vector: Vector2D) -> Axis:
         """Translada o eixo pelo vetor 2D informado."""
         return Axis(
-            start=self.start.translated(vector.x, vector.y),
-            end=self.end.translated(vector.x, vector.y),
+            start=self.start.moved_by(vector),
+            end=self.end.moved_by(vector),
         )
 
     def transformed(self, transform: Transform2D) -> Axis:
@@ -176,18 +178,18 @@ class Axis:
 
     def is_parallel(self, other: Axis, tolerance: float = GEOMETRIC_TOLERANCE) -> bool:
         """Verifica se este eixo é paralelo ao outro eixo dentro da tolerância."""
-        v1 = Vector2D(self.dx, self.dy)
-        v2 = Vector2D(other.dx, other.dy)
+        v1 = self.as_vector
+        v2 = other.as_vector
         return is_less_or_equal(abs(v1.cross(v2)), tolerance * self.length * other.length, tolerance=0.0)
 
     def is_collinear(self, other: Axis, tolerance: float = GEOMETRIC_TOLERANCE) -> bool:
         """Verifica se ambos os eixos pertencem à mesma reta suporte no plano 2D."""
         if not self.is_parallel(other, tolerance):
             return False
-        v_start = Vector2D(other.start.x - self.start.x, other.start.y - self.start.y)
+        v_start = self.start.vector_to(other.start)
         if is_zero(v_start.magnitude, tolerance):
             return True
-        v1 = Vector2D(self.dx, self.dy)
+        v1 = self.as_vector
         return is_less_or_equal(abs(v1.cross(v_start)), tolerance * self.length * v_start.magnitude, tolerance=0.0)
 
     def intersect(self, other: Axis, tolerance: float = GEOMETRIC_TOLERANCE) -> AxisIntersectionResult:
@@ -197,12 +199,12 @@ class Axis:
             AxisIntersectionResult com relation (DISJOINT, POINT_INTERSECT, TOUCHING_VERTEX ou OVERLAPPING).
         """
         p = self.start
-        r = Vector2D(self.dx, self.dy)
+        r = self.as_vector
         q = other.start
-        s = Vector2D(other.dx, other.dy)
+        s = other.as_vector
 
         r_cross_s = r.cross(s)
-        qp = Vector2D(q.x - p.x, q.y - p.y)
+        qp = p.vector_to(q)
         qp_cross_r = qp.cross(r)
 
         # 1. Linhas paralelas ou colineares
@@ -228,12 +230,12 @@ class Axis:
 
             # Toque em um único ponto extremo
             if is_close(t_start, t_end, tolerance):
-                pt = Point2D(p.x + t_start * r.x, p.y + t_start * r.y)
+                pt = p.moved_by(r * t_start)
                 return AxisIntersectionResult(relation=AxisRelation.TOUCHING_VERTEX, point=pt, t=t_start)
 
             # Sobreposição contínua (OVERLAPPING)
-            pt_a = Point2D(p.x + t_start * r.x, p.y + t_start * r.y)
-            pt_b = Point2D(p.x + t_end * r.x, p.y + t_end * r.y)
+            pt_a = p.moved_by(r * t_start)
+            pt_b = p.moved_by(r * t_end)
             overlap = Axis(start=pt_a, end=pt_b)
             return AxisIntersectionResult(relation=AxisRelation.OVERLAPPING, overlap_segment=overlap)
 
@@ -245,7 +247,7 @@ class Axis:
             # Clamping numérico para [0.0, 1.0]
             t_clamped = max(0.0, min(1.0, t))
             u_clamped = max(0.0, min(1.0, u))
-            pt = Point2D(p.x + t_clamped * r.x, p.y + t_clamped * r.y)
+            pt = p.moved_by(r * t_clamped)
 
             # Verifica se toca em vértice
             is_vertex_self = is_at_vertex(t_clamped, tolerance)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Iterable
 from attrs import field, frozen
 from pymasondesign.geometry.point import Point2D
 from pymasondesign.geometry.tolerances import (
@@ -46,10 +47,23 @@ class BoundingBox:
         )
 
     @classmethod
-    def from_points(cls, points: list[Point2D]) -> BoundingBox:
-        """Cria uma BoundingBox a partir de uma lista de pontos."""
-        if not points:
-            raise ValueError("A lista de pontos não pode estar vazia.")
-        xs = [p.x for p in points]
-        ys = [p.y for p in points]
-        return cls(xmin=min(xs), xmax=max(xs), ymin=min(ys), ymax=max(ys))
+    def from_points(cls, points: Iterable[Point2D]) -> BoundingBox:
+        """Cria uma BoundingBox a partir de um iterável de pontos."""
+        xmin = float("inf")
+        xmax = float("-inf")
+        ymin = float("inf")
+        ymax = float("-inf")
+        has_points = False
+
+        for p in points:
+            has_points = True
+            xmin = min(xmin, p.x)
+            xmax = max(xmax, p.x)
+            ymin = min(ymin, p.y)
+            ymax = max(ymax, p.y)
+
+        if not has_points:
+            raise ValueError("O iterável de pontos não pode estar vazio.")
+
+        return cls(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+

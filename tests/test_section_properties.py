@@ -32,6 +32,33 @@ class TestGeometryPointAndBounds(unittest.TestCase):
         with self.assertRaises(ValueError):
             BoundingBox(xmin=10.0, xmax=2.0, ymin=0.0, ymax=1.0)
 
+    def test_bounding_box_from_points(self):
+        pts = [Point2D(1.0, 5.0), Point2D(3.0, 2.0), Point2D(-1.0, 4.0)]
+
+        # Lista
+        box_list = BoundingBox.from_points(pts)
+        self.assertAlmostEqual(box_list.xmin, -1.0)
+        self.assertAlmostEqual(box_list.xmax, 3.0)
+        self.assertAlmostEqual(box_list.ymin, 2.0)
+        self.assertAlmostEqual(box_list.ymax, 5.0)
+
+        # Tupla
+        box_tuple = BoundingBox.from_points(tuple(pts))
+        self.assertAlmostEqual(box_tuple.xmin, -1.0)
+        self.assertAlmostEqual(box_tuple.xmax, 3.0)
+
+        # Gerador
+        box_gen = BoundingBox.from_points(p for p in pts)
+        self.assertAlmostEqual(box_gen.xmin, -1.0)
+        self.assertAlmostEqual(box_gen.xmax, 3.0)
+
+        # Iterável vazio levanta ValueError
+        with self.assertRaises(ValueError):
+            BoundingBox.from_points([])
+
+        with self.assertRaises(ValueError):
+            BoundingBox.from_points(p for p in [])
+
 
 class TestRectangularSection(unittest.TestCase):
     def test_solid_rectangle_properties(self):

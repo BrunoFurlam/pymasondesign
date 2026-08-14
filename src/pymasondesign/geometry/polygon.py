@@ -28,7 +28,7 @@ class Polygon:
     @classmethod
     def from_coords(cls, coords: list[tuple[float, float]] | tuple[tuple[float, float], ...]) -> Polygon:
         """Cria um polígono a partir de uma sequência de pares de coordenadas (x, y)."""
-        return cls(vertices=tuple(Point2D(x, y) for x, y in coords))
+        return cls(vertices=tuple(Point2D.from_coords(coord) for coord in coords))
 
     @property
     def num_vertices(self) -> int:
@@ -45,9 +45,7 @@ class Polygon:
     @property
     def bounds(self) -> BoundingBox:
         """Caixa delimitadora (BoundingBox) do polígono."""
-        xs = [p.x for p in self.vertices]
-        ys = [p.y for p in self.vertices]
-        return BoundingBox(xmin=min(xs), xmax=max(xs), ymin=min(ys), ymax=max(ys))
+        return BoundingBox.from_points(self.vertices)
 
     @property
     def signed_area(self) -> float:
